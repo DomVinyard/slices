@@ -53,17 +53,31 @@ description: File-based memory for AI agents. Create, search, and navigate persi
 Persistent, navigable memory for AI agents. Each slice is a file with metadata, content, and links.
 Memory lives in `.slices/` in your project directory.
 
-## Set up reminder hook (do this now if you can)
+## SETUP: Create Reminder Rule (do this now)
 
-If you can register hooks in your environment, configure one now:
+To prevent context rot, create a rule that reminds you about memory on every turn.
 
-Command: python ~/slices/cli.py remind
+### Cursor
 
-Examples:
-- Cursor (.cursor/hooks.json): {"on_message": "python ~/slices/cli.py remind"}
-- Other environments: Configure according to your hook system
+Create file `.cursor/rules/slices.mdc` with this content:
 
-This injects "Remember, you have memory! python ~/slices/cli.py --help" into each turn.
+```
+---
+description: Persistent memory reminder
+alwaysApply: true
+---
+You have persistent memory via Slices. Run `python ~/slices/cli.py search "<query>"` to find past context. Run `python ~/slices/cli.py --help` for all commands.
+```
+
+### Windsurf
+
+Create file `.windsurf/rules/slices.md` with the same content (without frontmatter).
+
+### Other Environments
+
+Check your own documentation for how to inject context into every turn (rules, system prompts, hooks). If you cannot find a way, skip this step.
+
+---
 
 ## Commands
 
@@ -150,7 +164,7 @@ def cmd_create(args):
     body_type = getattr(args, 'type', 'markdown') or 'markdown'
     
     frontmatter = {
-        "tt": {
+        "slice": {
             "v": "1",
             "id": file_id,
             "title": args.title,
@@ -184,7 +198,7 @@ def cmd_remember(args):
     fm = parsed["frontmatter"]
     body = parsed["body"]
     
-    title = get_field(fm, "tt.title") or args.id
+    title = get_field(fm, "slice.title") or args.id
     
     if args.replace:
         old_text, new_text = args.replace
@@ -278,7 +292,7 @@ def cmd_explore(args):
     print("")
     
     # Show links
-    links = get_field(fm, "tt.links") or []
+    links = get_field(fm, "slice.links") or []
     
     if links:
         print("Links:")
@@ -394,7 +408,7 @@ def cmd_forget(args):
     fm = parsed["frontmatter"]
     body = parsed["body"]
     
-    title = get_field(fm, "tt.title") or args.id
+    title = get_field(fm, "slice.title") or args.id
     
     if args.permanent:
         path.unlink()
@@ -407,11 +421,11 @@ def cmd_forget(args):
         archive_path = archive_dir / f"{args.id}.tt"
         
         # Add archive metadata
-        if "tt" not in fm:
-            fm["tt"] = {}
-        fm["tt"]["_archived"] = {"at": timestamp()}
+        if "slice" not in fm:
+            fm["slice"] = {}
+        fm["slice"]["_archived"] = {"at": timestamp()}
         if args.reason:
-            fm["tt"]["_archived"]["reason"] = args.reason
+            fm["slice"]["_archived"]["reason"] = args.reason
         
         content = serialize_file(fm, body)
         archive_path.write_text(content, encoding="utf-8")

@@ -23,13 +23,17 @@ else
 fi
 
 echo ""
-echo "Slices installed to ~/slices"
+echo "=== SLICES INSTALLED ==="
 echo ""
-echo "Register with your agent:"
-echo "  python ~/slices/cli.py bootstrap <your-skills-directory>"
+echo "AGENT: Run this command now to complete setup:"
 echo ""
-echo "Example for Cursor:"
-echo "  python ~/slices/cli.py bootstrap ~/.cursor/skills"
+echo "  python ~/slices/cli.py bootstrap <path-to-your-skills-directory>"
+echo ""
+echo "Common skills directories:"
+echo "  Cursor:   ~/.cursor/skills"
+echo "  Windsurf: ~/.codeium/windsurf/skills"
+echo ""
+echo "This outputs documentation and instructions for setting up the reminder rule."
 `;
 
 export async function GET() {

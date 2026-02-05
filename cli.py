@@ -78,6 +78,7 @@ All commands: `python ~/slices/cli.py <command> [args]`
 | create | `create "Title" "Summary"` | Create new slice, returns ID |
 | define | `define <id> <field> <value>` | Set any frontmatter field |
 | remember | `remember <id> "content"` | Append content to slice |
+| recall | `recall <id> [id2...]` | Read slices into context |
 | search | `search "query"` | Find slices by content |
 | explore | `explore <id>` | Show slice and its connections |
 | connect | `connect <src> <tgt> <rel>` | Link two slices |
@@ -241,6 +242,51 @@ def cmd_remember(args):
     
     content = serialize_file(fm, new_body)
     path.write_text(content, encoding="utf-8")
+
+
+# =============================================================================
+# Recall Command
+# =============================================================================
+
+def cmd_recall(args):
+    """Read content from slices into context."""
+    init_slices_dir()
+
+    results = []
+    errors = []
+
+    for file_id in args.ids:
+        path = find_by_id(file_id)
+        if not path:
+            errors.append(file_id)
+            continue
+
+        parsed = parse_file(path)
+        fm = parsed["frontmatter"]
+        body = parsed["body"]
+
+        title = get_title(fm, file_id)
+        actual_id = get_id(fm, file_id)
+
+        results.append({
+            "id": actual_id,
+            "title": title,
+            "body": body.strip(),
+        })
+
+    if errors:
+        print(f"Warning: Could not find: {', '.join(errors)}", file=sys.stderr)
+
+    if not results:
+        print("Error: No files found", file=sys.stderr)
+        sys.exit(1)
+
+    # Output concatenated content
+    for i, result in enumerate(results):
+        if i > 0:
+            print("\n---\n")
+        print(f"=== {result['title']} ({result['id']}) ===\n")
+        print(result['body'])
 
 
 # =============================================================================
@@ -674,6 +720,7 @@ Commands:
   define <id> <field> <value>         Set any frontmatter field
   remember <id> "content"             Append content to slice
   remember <id> "new" "old"           Replace old text with new
+  recall <id> [id2...]                Read slices into context
   search "query"                      Find slices by content
   explore <id>                        Show slice and connections
   connect <src> <tgt> <rel>           Link two slices
@@ -684,7 +731,7 @@ Commands:
 Examples:
   python ~/slices/cli.py create "API Decisions" "Technical choices"
   python ~/slices/cli.py remember ABC123 "We chose JWT for auth"
-  python ~/slices/cli.py remember ABC123 "JWT" "session tokens"
+  python ~/slices/cli.py recall ABC123 DEF456
   python ~/slices/cli.py search "JWT"
         """
     else:
@@ -738,7 +785,12 @@ Run bootstrap to set up memory in this project:
     p_remember.add_argument("content", help="Content to add (or new content if replacing)")
     p_remember.add_argument("old_content", nargs="?", help="Text to replace (if provided)")
     p_remember.set_defaults(func=cmd_remember)
-    
+
+    # Recall
+    p_recall = subparsers.add_parser("recall", help="Read slices into context")
+    p_recall.add_argument("ids", nargs="+", help="File IDs to recall")
+    p_recall.set_defaults(func=cmd_recall)
+
     # Search
     p_search = subparsers.add_parser("search", help="Search slices")
     p_search.add_argument("query", help="Search query")

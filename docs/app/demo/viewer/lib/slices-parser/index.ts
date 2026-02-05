@@ -38,7 +38,7 @@ export type {
   ULIDReference,
   PathReference,
   Position,
-} from "./types.js";
+} from "./types";
 
 // Re-export constants
 export {
@@ -57,9 +57,9 @@ export {
   ULID_PATTERN,
   ULID_REFERENCE_PATTERN,
   PATH_REFERENCE_PATTERN,
-} from "./constants.js";
+} from "./constants";
 
-export type { RelationshipProperties } from "./constants.js";
+export type { RelationshipProperties } from "./constants";
 
 // Re-export parser functions
 export {
@@ -68,7 +68,7 @@ export {
   parseFileStrict,
   serializeFile,
   parseJSONLBody,
-} from "./parser.js";
+} from "./parser";
 
 // Re-export utility functions
 export {
@@ -81,7 +81,7 @@ export {
   findPathReferences,
   getFieldPosition,
   extractIdFromPath,
-} from "./utils.js";
+} from "./utils";
 
 // Re-export inference functions and types
 export {
@@ -92,11 +92,11 @@ export {
   getTransitiveRelationships,
   getSymmetricRelationships,
   computeAllInferences,
-} from "./inference.js";
+} from "./inference";
 
 export type {
   GraphEdge,
   InferredEdge,
   InferenceOptions,
   TransitiveClosureResult,
-} from "./inference.js";
+} from "./inference";

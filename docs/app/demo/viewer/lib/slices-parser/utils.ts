@@ -2,8 +2,8 @@
  * Utility functions for Slices parsing.
  */
 
-import type { ParsedFile, TTLink, ULIDReference, PathReference, Position } from './types.js';
-import { ULID_PATTERN, ULID_REFERENCE_PATTERN, PATH_REFERENCE_PATTERN } from './constants.js';
+import type { ParsedFile, TTLink, ULIDReference, PathReference, Position } from './types';
+import { ULID_PATTERN, ULID_REFERENCE_PATTERN, PATH_REFERENCE_PATTERN } from './constants';
 
 /**
  * Get the effective ID for a file (from tt.id or filename).

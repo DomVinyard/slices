@@ -13,7 +13,7 @@ import type {
   ParsedFileWithRanges,
   TTFile,
   JSONLRow,
-} from './types.js';
+} from './types';
 
 /**
  * Extract filename from a path (without .tt extension).

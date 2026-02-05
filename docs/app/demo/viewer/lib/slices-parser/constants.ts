@@ -2,7 +2,7 @@
  * Constants for Slices file format.
  */
 
-import type { RelationshipType } from './types.js';
+import type { RelationshipType } from './types';
 
 /**
  * All valid relationship types.

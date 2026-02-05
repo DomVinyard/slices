@@ -11,8 +11,8 @@
  * - W3C PROV (provenance tracking via 'via' field)
  */
 
-import type { RelationshipType } from './types.js';
-import { RELATIONSHIP_PROPERTIES } from './constants.js';
+import type { RelationshipType } from './types';
+import { RELATIONSHIP_PROPERTIES } from './constants';
 
 // ============================================================================
 // Types

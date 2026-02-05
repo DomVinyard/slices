@@ -1,0 +1,209 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE022
+  created_at: "2023-08-28T11:00:00Z"
+  title: "Treat Dispenser API"
+  summary: "Controls the in-car treat dispenser hardware"
+  kind: pointer
+  body:
+    type: code
+    code:
+      lang: typescript
+      extension: ts
+  contract:
+    purpose: "Pointer to treat dispenser control system"
+    exclude: ["hardware schematics", "supplier info"]
+    format: "Code reference with API interface"
+    write: replace
+  links:
+    - rel: parent
+      to: 01JWAGGLE002
+      label: "Architecture"
+    - rel: implements
+      to: 01JWAGGLE013
+      label: "Treat Economy ADR"
+---
+
+# Treat Dispenser Control
+
+**Location:** `services/treat-dispenser/`
+
+## Key Files
+
+- `services/treat-dispenser/dispenser.ts` - Core dispenser logic
+- `services/treat-dispenser/budget.ts` - Treat budget management
+- `hardware/dispenser-firmware/main.cpp` - ESP32 firmware
+
+## Dispenser Interface
+
+```typescript
+// dispenser.ts
+
+interface TreatDispenser {
+  rideId: string;
+  driverId: string;
+  connected: boolean;
+  treatStock: number;
+  budget: TreatBudget;
+}
+
+interface TreatBudget {
+  total: number;
+  dispensed: number;
+  remaining: number;
+  autoDispenseEnabled: boolean;
+}
+
+interface DispenseResult {
+  success: boolean;
+  treatsDispensed: number;
+  remaining: number;
+  reason: DispenseReason;
+  timestamp: Date;
+}
+
+type DispenseReason = 
+  | 'pickup_greeting'
+  | 'arrival_reward'
+  | 'good_behavior'
+  | 'anxiety_comfort'
+  | 'driver_manual'
+  | 'vet_bonus';
+
+class TreatDispenserService {
+  
+  async dispense(
+    rideId: string, 
+    count: number, 
+    reason: DispenseReason
+  ): Promise<DispenseResult> {
+    const ride = await this.getRide(rideId);
+    const budget = await this.getBudget(rideId);
+    
+    // Check budget
+    if (count > budget.remaining) {
+      return { success: false, reason: 'budget_exceeded' };
+    }
+    
+    // Check anti-gaming rules
+    if (!this.passesAntiGaming(ride, reason)) {
+      return { success: false, reason: 'rate_limited' };
+    }
+    
+    // Send command to hardware
+    await this.sendToDispenser(ride.dispenserId, count);
+    
+    // Update budget
+    await this.updateBudget(rideId, count);
+    
+    return {
+      success: true,
+      treatsDispensed: count,
+      remaining: budget.remaining - count,
+      reason,
+      timestamp: new Date()
+    };
+  }
+  
+  private passesAntiGaming(ride: Ride, reason: DispenseReason): boolean {
+    const lastDispense = ride.lastDispenseTime;
+    const now = Date.now();
+    
+    // Minimum 2 minutes between auto-dispenses
+    if (reason !== 'driver_manual' && lastDispense) {
+      if (now - lastDispense < 2 * 60 * 1000) {
+        return false;
+      }
+    }
+    
+    // Max 3 treats per minute
+    const recentTreats = ride.treatHistory.filter(
+      t => now - t.timestamp < 60 * 1000
+    );
+    if (recentTreats.length >= 3) {
+      return false;
+    }
+    
+    return true;
+  }
+}
+```
+
+## Budget Management
+
+```typescript
+// budget.ts
+
+function calculateBudget(ride: Ride): TreatBudget {
+  let total = 10; // Base budget
+  
+  // Long ride bonus
+  if (ride.estimatedDuration > 20) {
+    total = 15;
+  }
+  
+  // Vet visit bonus
+  if (ride.destinationType === 'vet') {
+    total = 20;
+  }
+  
+  // First ride bonus
+  if (ride.dog.totalRides === 0) {
+    total = 15;
+  }
+  
+  // Anxious dog bonus
+  if (ride.dog.flags.includes('anxious')) {
+    total += 5;
+  }
+  
+  return {
+    total,
+    dispensed: 0,
+    remaining: total,
+    autoDispenseEnabled: true
+  };
+}
+```
+
+## Hardware Protocol
+
+```cpp
+// hardware/dispenser-firmware/main.cpp
+// ESP32-S3 firmware
+
+#include <WiFi.h>
+#include <Stepper.h>
+
+const int STEPS_PER_TREAT = 64;
+Stepper motor(2048, 32, 33, 25, 26);
+
+void dispenseTreat(int count) {
+  for (int i = 0; i < count; i++) {
+    motor.step(STEPS_PER_TREAT);
+    
+    // Wait for IR sensor to confirm treat dropped
+    if (!waitForTreatConfirmation(2000)) {
+      // Treat jam - notify driver app
+      sendJamAlert();
+      return;
+    }
+    
+    delay(500); // Brief pause between treats
+  }
+  
+  sendDispenseConfirmation(count);
+}
+
+bool waitForTreatConfirmation(int timeoutMs) {
+  unsigned long start = millis();
+  while (millis() - start < timeoutMs) {
+    if (digitalRead(IR_SENSOR_PIN) == LOW) {
+      return true; // Treat detected falling
+    }
+    delay(10);
+  }
+  return false;
+}
+```

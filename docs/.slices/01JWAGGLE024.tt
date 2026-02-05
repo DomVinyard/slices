@@ -1,0 +1,227 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE024
+  created_at: "2023-09-15T16:00:00Z"
+  title: "Dog Profile Schema"
+  summary: "Data model for dogs with breed, size, favorite treats, and friends"
+  kind: pointer
+  body:
+    type: code
+    code:
+      lang: typescript
+      extension: ts
+  contract:
+    purpose: "Pointer to dog data model and schema"
+    exclude: ["PII handling", "data retention policies"]
+    format: "TypeScript interfaces and Prisma schema"
+    write: replace
+  links:
+    - rel: parent
+      to: 01JWAGGLE002
+      label: "Architecture"
+    - rel: references
+      to: 01JWAGGLE006
+      label: "Passenger Safety"
+    - rel: references
+      to: 01JWAGGLE020
+      label: "Ride Matching"
+---
+
+# Dog Profile Schema
+
+**Location:** `services/dogs/`
+
+## Key Files
+
+- `services/dogs/types.ts` - TypeScript interfaces
+- `prisma/schema.prisma` - Database schema
+- `services/dogs/repository.ts` - Data access layer
+
+## TypeScript Interfaces
+
+```typescript
+// types.ts
+
+interface Dog {
+  id: string;                    // ULID
+  name: string;
+  breed: string;
+  size: DogSize;
+  weightLbs: number;
+  age: number;
+  
+  // Preferences
+  favoriteTreat: TreatType;
+  treatAllergies: string[];
+  
+  // Social
+  knownFriends: string[];        // Other dog IDs
+  notFriendsWith: string[];      // Incompatible dogs
+  
+  // Behavior flags
+  flags: DogFlag[];
+  
+  // Collar
+  collarId: string;
+  collarPairedAt: Date;
+  
+  // Stats
+  totalRides: number;
+  avgWagScore: number;
+  
+  // Owner
+  ownerId: string;
+  
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+type DogSize = 'small' | 'medium' | 'large' | 'xl';
+
+type TreatType = 
+  | 'bacon_bits'
+  | 'chicken_jerky'
+  | 'peanut_butter'
+  | 'dental_chew'
+  | 'cheese_cube';
+
+type DogFlag = 
+  | 'anxious'           // Needs extra treats, calm drivers
+  | 'reactive'          // Solo rides only
+  | 'senior'            // Gentle handling
+  | 'puppy'             // Extra supervision
+  | 'motion_sick'       // Shorter rides, windows down
+  | 'escape_artist'     // Extra door lock verification
+  | 'food_aggressive'   // No pack rides with treats
+  | 'quiet'             // Uses visual confirmation (no bark)
+  | 'stubby_tail'       // Alternative wag detection;
+
+interface DogPreferences {
+  dogId: string;
+  
+  // Learned from behavior
+  preferredParkTime: 'morning' | 'afternoon' | 'evening';
+  weatherPreference: 'any' | 'fair_weather' | 'loves_rain';
+  socialLevel: 'solo' | 'selective' | 'social_butterfly';
+  
+  // Favorite destinations (learned)
+  topDestinations: DestinationPreference[];
+}
+
+interface DestinationPreference {
+  destinationId: string;
+  name: string;
+  type: DestinationType;
+  visitCount: number;
+  avgWagScore: number;
+  lastVisit: Date;
+}
+
+type DestinationType = 
+  | 'dog_park'
+  | 'daycare'
+  | 'groomer'
+  | 'vet'
+  | 'friend_house'
+  | 'pet_store'
+  | 'beach'
+  | 'hiking_trail';
+```
+
+## Prisma Schema
+
+```prisma
+// prisma/schema.prisma
+
+model Dog {
+  id            String   @id @default(cuid())
+  name          String
+  breed         String
+  size          DogSize
+  weightLbs     Int
+  age           Int
+  
+  favoriteTreat TreatType
+  treatAllergies String[]
+  
+  flags         DogFlag[]
+  
+  collarId      String   @unique
+  collarPairedAt DateTime
+  
+  totalRides    Int      @default(0)
+  avgWagScore   Float    @default(0)
+  
+  owner         User     @relation(fields: [ownerId], references: [id])
+  ownerId       String
+  
+  rides         Ride[]
+  destinations  DogDestination[]
+  friendships   DogFriendship[] @relation("DogFriends")
+  friendOf      DogFriendship[] @relation("FriendOf")
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([ownerId])
+  @@index([collarId])
+}
+
+model DogFriendship {
+  id        String   @id @default(cuid())
+  dog       Dog      @relation("DogFriends", fields: [dogId], references: [id])
+  dogId     String
+  friend    Dog      @relation("FriendOf", fields: [friendId], references: [id])
+  friendId  String
+  
+  status    FriendshipStatus  // 'friends', 'not_friends', 'pending'
+  metAt     String?           // Where they met
+  
+  @@unique([dogId, friendId])
+}
+
+model DogDestination {
+  id            String   @id @default(cuid())
+  dog           Dog      @relation(fields: [dogId], references: [id])
+  dogId         String
+  
+  name          String
+  type          DestinationType
+  location      Json     // { lat, lng }
+  
+  visitCount    Int      @default(0)
+  avgWagScore   Float    @default(0)
+  lastVisit     DateTime?
+  
+  @@unique([dogId, name])
+  @@index([dogId])
+}
+```
+
+## Example Dog Profile
+
+```json
+{
+  "id": "dog_01HXYZ",
+  "name": "Buster",
+  "breed": "golden_retriever",
+  "size": "large",
+  "weightLbs": 72,
+  "age": 4,
+  "favoriteTreat": "bacon_bits",
+  "treatAllergies": [],
+  "knownFriends": ["dog_luna", "dog_charlie", "dog_max"],
+  "notFriendsWith": ["dog_aggressive_chihuahua"],
+  "flags": [],
+  "collarId": "collar_ABC123",
+  "totalRides": 234,
+  "avgWagScore": 8.7,
+  "topDestinations": [
+    { "name": "Riverside Dog Park", "visitCount": 89, "avgWagScore": 9.2 },
+    { "name": "Charlie's House", "visitCount": 34, "avgWagScore": 9.0 },
+    { "name": "Barkley's Daycare", "visitCount": 67, "avgWagScore": 8.1 }
+  ]
+}
+```

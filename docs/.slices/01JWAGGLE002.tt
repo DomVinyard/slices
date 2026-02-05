@@ -1,0 +1,318 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE002
+  created_at: "2023-06-05T14:30:00Z"
+  title: "Architecture"
+  summary: "System architecture: collar hardware, mobile apps, and matching service"
+  kind: context
+  body:
+    type: markdown
+  contract:
+    purpose: "Technical architecture overview and component descriptions"
+    exclude: ["business decisions", "team info"]
+    format: "System diagrams and component breakdowns"
+    write: append
+  links:
+    - rel: parent
+      to: 01JWAGGLE001
+    - rel: references
+      to: 01JWAGGLE011
+      label: "Bark Recognition ADR"
+    - rel: references
+      to: 01JWAGGLE012
+      label: "Destination Learning ADR"
+    - rel: references
+      to: 01JWAGGLE013
+      label: "Treat Economy ADR"
+    - rel: references
+      to: 01JWAGGLE014
+      label: "Cat Policy ADR"
+    - rel: implements
+      to: 01JWAGGLE020
+      label: "Ride Matching"
+    - rel: implements
+      to: 01JWAGGLE021
+      label: "Bark Recognizer"
+    - rel: implements
+      to: 01JWAGGLE022
+      label: "Treat Dispenser"
+    - rel: implements
+      to: 01JWAGGLE023
+      label: "Tail Wag Analyzer"
+    - rel: implements
+      to: 01JWAGGLE024
+      label: "Dog Profile"
+    - rel: references
+      to: 01JWAGGLE040
+      label: "Deploy Routine"
+---
+
+# Waggle Architecture
+
+## System Overview
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Waggle Collar  │────▶│   Mobile App    │────▶│  Waggle Cloud   │
+│   (Dog wears)   │ BLE │  (Human's phone)│HTTPS│   (Matching)    │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                                                       │
+                       ┌─────────────────┐            │
+                       │   Driver App    │◀───────────┘
+                       │ (Treat control) │
+                       └─────────────────┘
+```
+
+## Components
+
+### Waggle Collar (Hardware)
+
+The collar is the dog's interface to the Waggle network. It represents years of iterative design to create a device that dogs can actually use without human intervention.
+
+#### Physical Design
+
+- **Boop Button**: 3-inch capacitive touch button, requires firm press (no accidental boops)
+  - Pressure threshold: 15 newtons minimum activation force
+  - Surface texture: Raised rubber nubs for paw grip
+  - LED ring: Pulses blue when ready, green on successful boop
+  - Weatherproof rating: IP67 (survives mud puddles and rain)
+  
+- **Form Factor**: Lightweight band that attaches to existing collar
+  - Weight: 45g (acceptable for dogs 15 lbs+)
+  - Adjustable mounting positions for different collar widths
+  - Quick-release safety mechanism for emergencies
+
+#### Sensors and Processing
+
+- **Microphone**: Always-listening for bark patterns, processed on-device
+  - MEMS microphone with 65 dB SNR
+  - On-device neural network for bark classification
+  - Privacy-first: only bark features transmitted, never raw audio
+  - Distinguishes request barks from alert barks, play barks, and random woofs
+  
+- **Accelerometer**: Tail wag detection, 100Hz sampling
+  - 6-axis IMU (accelerometer + gyroscope)
+  - Wag frequency analysis: 0.5-15 Hz detection range
+  - Amplitude measurement for enthusiasm scoring
+  - Activity classification: walking, running, playing, resting
+  
+- **BLE Radio**: Connects to human's phone within 50m range
+  - Bluetooth Low Energy 5.0 with Long Range mode
+  - Encrypted communication channel
+  - Automatic reconnection after signal loss
+  - Multiple phone pairing for households with shared dogs
+
+#### Power Management
+
+- **Battery**: 2000mAh Li-Po, 2 weeks typical use
+  - Fast charging: 80% in 1 hour via USB-C
+  - Low battery warnings at 20% and 5%
+  - Power-saving mode reduces features to extend life
+  - Battery health monitoring with degradation alerts
+
+- **MCU**: Nordic nRF52840 for on-device ML inference
+  - ARM Cortex-M4 @ 64 MHz
+  - 1 MB Flash, 256 KB RAM
+  - TensorFlow Lite Micro runtime
+  - OTA firmware updates
+
+### Mobile App (Human Companion)
+
+The human companion app is the bridge between dog desires and responsible pet ownership. It ensures humans stay informed and in control while giving dogs agency over their adventures.
+
+#### Core Features
+
+- **Destination Management**: Add/edit favorite places
+  - Location autocomplete with dog-friendly place suggestions
+  - Custom place names ("Max's favorite tree")
+  - Operating hours awareness for businesses
+  - Weather-aware suggestions (indoor options on rainy days)
+  
+- **Payment**: Stripe integration, per-ride billing
+  - Saved payment methods with Apple Pay / Google Pay
+  - Ride receipts with route details and tail wag scores
+  - Monthly subscription option for frequent travelers
+  - Family billing for multi-dog households
+
+- **Ride History**: Where did Buster go this week?
+  - Interactive map with all ride routes
+  - Time-based filtering (today, this week, this month)
+  - Tail wag score trends over time
+  - Destination frequency analytics
+
+- **Override Controls**: Cancel ride, change destination
+  - One-tap emergency stop (ride ends at next safe location)
+  - Mid-ride destination changes
+  - Speed alerts if driver exceeds safe limits
+  - Direct driver communication channel
+
+- **Vet Mode**: Schedule reluctant rides
+  - Pre-scheduled rides that don't require dog confirmation
+  - Scenic route option to delay vet recognition
+  - Extra treat budget automatically applied
+  - Calm music playlist for anxious passengers
+
+#### Notification System
+
+| Notification Type | Timing | User Action Required |
+|-------------------|--------|---------------------|
+| Ride requested | Immediate | Confirm/modify destination |
+| Driver matched | Immediate | None (informational) |
+| Driver arriving | 2 min ETA | None |
+| Ride started | Departure | None |
+| Mid-ride update | Every 10 min | None |
+| Destination reached | Arrival | Rate the ride |
+| Low collar battery | Daily | Charge reminder |
+
+### Waggle Cloud
+
+The brain that matches dogs to drivers. Our cloud infrastructure processes thousands of ride requests per minute while maintaining sub-200ms response times.
+
+#### Core Services
+
+- **Ride Matching Service**: Finds optimal driver based on location, dog size, driver ratings
+  - Multi-factor scoring algorithm
+  - Real-time driver availability tracking
+  - Surge pricing during high-demand periods (dog park rush hour)
+  - Fair distribution algorithm prevents driver fatigue
+
+- **Destination ML**: Predicts where dog wants to go based on time, weather, tail wag patterns
+  - Personalized model per dog
+  - Contextual features: time of day, day of week, weather, recent rides
+  - Confidence scoring for predictions
+  - Human feedback loop for model improvement
+
+- **Bark Analysis**: Server-side verification of ride request barks
+  - Secondary confirmation of on-device bark classification
+  - Fraud detection (bark playback attempts)
+  - Regional bark accent accommodation
+  - Continuous model training on confirmed requests
+
+- **Treat Inventory**: Tracks driver treat supplies, triggers restocking
+  - Per-driver treat counts
+  - Automatic restock orders when below threshold
+  - Treat preference tracking per dog
+  - Allergy awareness (no peanut treats for allergic dogs)
+
+#### Data Pipeline
+
+```
+┌─────────────┐    ┌──────────────┐    ┌─────────────┐
+│ Ride Events │───▶│ Kafka Streams │───▶│ TimescaleDB │
+└─────────────┘    └──────────────┘    └─────────────┘
+                          │
+                          ▼
+                   ┌──────────────┐
+                   │ ML Pipeline  │
+                   │ (Airflow)    │
+                   └──────────────┘
+                          │
+                          ▼
+                   ┌──────────────┐
+                   │ Model Store  │
+                   │ (MLflow)     │
+                   └──────────────┘
+```
+
+### Driver App
+
+The driver's interface for completing rides safely and delightfully.
+
+#### Navigation Features
+
+- **Navigation**: Dog-optimized routes (avoids cat-heavy areas)
+  - Cat density heat maps from community reports
+  - Construction zone avoidance (loud noises)
+  - Scenic routes for anxious dogs
+  - Real-time traffic with dog park rush hour predictions
+
+- **Treat Dispenser Control**: Manual and automatic treat release
+  - One-tap treat button for good behavior
+  - Automatic treat on departure and arrival
+  - Treat budget display and warnings
+  - Emergency treat flood for distraction (squirrel sightings)
+
+- **Passenger Status**: Real-time tail wag monitoring
+  - Live wag score display
+  - Anxiety indicators with calming suggestions
+  - Activity level (calm, excited, restless)
+  - Historical comparison for regular passengers
+
+- **Safety Alerts**: Squirrel warnings, dog park arrival prep
+  - Predictive squirrel zones based on time of day
+  - Child lock reminders near schools
+  - Window lock status
+  - Temperature alerts for vehicle interior
+
+#### Driver Earnings
+
+| Metric | Description |
+|--------|-------------|
+| Base fare | $5.00 per ride |
+| Per mile | $1.50 |
+| Per minute | $0.25 |
+| Treat bonus | Up to $2.00 for high wag scores |
+| Pack ride bonus | +50% for multi-dog rides |
+| Peak hours | 1.5x multiplier |
+
+## Data Flow
+
+### Standard Ride Request
+
+1. Dog boops collar → BLE event to human's phone
+2. Phone sends ride request to cloud
+3. Cloud runs bark verification (was it a real request bark?)
+4. Cloud predicts destination from history + current context
+5. Human confirms or adjusts destination (30-second timeout auto-confirms favorites)
+6. Matching service finds best driver
+7. Driver accepts, en route
+8. Real-time GPS tracking for human
+9. Tail wag scores streamed during ride
+10. Arrival → treat burst → ride complete
+
+### Edge Cases
+
+| Scenario | System Behavior |
+|----------|-----------------|
+| Human doesn't respond | Auto-confirm to top favorite after 2 min |
+| No drivers available | Retry every 30s, notify human after 5 min |
+| Dog cancels mid-ride | Return to pickup location |
+| Driver cancels | Auto-reassign, extra treats for inconvenience |
+| Destination closed | Suggest alternatives, require human confirmation |
+| Severe weather | Hold ride, notify human |
+
+## Security Architecture
+
+### Data Protection
+
+- **At Rest**: AES-256 encryption for all databases
+- **In Transit**: TLS 1.3 for all API communications
+- **Collar Data**: Minimal data transmission, no raw audio storage
+- **PII Handling**: GDPR/CCPA compliant, right to deletion supported
+
+### Authentication
+
+- **Human App**: OAuth 2.0 with biometric option
+- **Driver App**: Enhanced verification with ID check
+- **Collar**: Hardware-bound certificates, anti-cloning protection
+- **API**: JWT tokens with 1-hour expiration
+
+## Monitoring and Observability
+
+### Key Dashboards
+
+| Dashboard | Purpose | Alert Threshold |
+|-----------|---------|-----------------|
+| Ride Success Rate | Completed rides / requests | < 90% |
+| Match Time p99 | Driver assignment latency | > 2 min |
+| Collar Battery Health | Fleet-wide battery levels | > 5% critical |
+| Treat Inventory | Driver treat stock levels | > 10% empty |
+| Wag Score Trends | Passenger satisfaction | < 7.0 avg |
+
+### Incident Response
+
+1. **P1 (Service Down)**: Page on-call, 15-min response SLA
+2. **P2 (Degraded)**: Slack alert, 1-hour response SLA
+3. **P3 (Minor)**: Ticket created, next business day
+4. **P4 (Low)**: Backlog prioritization

@@ -1,0 +1,120 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE014
+  created_at: "2023-06-15T15:30:00Z"
+  title: "ADR: Cat Policy"
+  summary: "Why we don't serve cats (they don't want to go anywhere)"
+  kind: context
+  body:
+    type: markdown
+  contract:
+    purpose: "Architecture decision record explaining dogs-only policy"
+    exclude: ["legal opinions", "investor communications"]
+    format: "ADR format with context, decision, consequences"
+    write: append
+  links:
+    - rel: parent
+      to: 01JWAGGLE010
+      label: "Decision Log"
+    - rel: parent
+      to: 01JWAGGLE002
+      label: "Architecture"
+---
+
+# ADR-014: The Cat Policy
+
+**Status:** Accepted  
+**Date:** 2023-06-15  
+**Deciders:** Sarah Chen, Marcus Thompson, Dr. Patricia Woofson
+
+## Context
+
+During our Series A fundraise, multiple investors asked: "What about cats?"
+
+It's a reasonable question. Cats are the second most popular pet. TAM would increase significantly. Several investors made it a condition of investment.
+
+We decided to test it.
+
+## The Cat Beta Test
+
+**Duration:** 3 months  
+**Participants:** 47 cats across 32 households  
+**Collar modifications:** Smaller button, different bark detection (meow detection)
+
+### Results
+
+| Metric | Dogs (control) | Cats |
+|--------|----------------|------|
+| Ride requests (3 months) | 2,847 | 0 |
+| Button interactions | 12,394 | 23 |
+| Meow confirmations | N/A | 0 |
+| Driver scratches | 0 | 12 |
+| Successful onboarding | 100% | 0% |
+
+### Qualitative Observations
+
+**Cat #7 (Mr. Whiskers):**
+> Stared at collar button for 4 minutes. Walked away. Repeated daily for 2 weeks. Never pressed it.
+
+**Cat #23 (Princess):**
+> Knocked collar off table. Sat on it. Made eye contact with owner. Did not request ride.
+
+**Cat #31 (Chairman Meow):**
+> Successfully pressed button once (accident while stretching). Meowed in apparent annoyance. Ride auto-cancelled due to no confirmation.
+
+**Driver Incident Report Summary:**
+- 8 scratches during attempted pickup
+- 3 scratches during attempted drop-off
+- 1 driver "trapped in car with angry cat for 20 minutes"
+
+### Dr. Woofson's Analysis
+
+> "Cats exhibit fundamentally different mobility preferences than dogs. Dogs are driven by social bonds and environmental exploration—they want to go to the park, to friends, to new smells. Cats are territorial and prefer to stay within their established domain. A cat's ideal destination is exactly where they already are."
+
+## Decision
+
+**Waggle serves dogs only.**
+
+This is not species discrimination. It's product-market fit.
+
+## Alternatives Considered
+
+### Option A: Full Cat Support
+- **Effort:** 6+ months, significant R&D
+- **Expected outcome:** Near-zero usage
+- **Verdict:** No
+
+### Option B: Cat Transport (Human-Initiated Only)
+- **Use case:** Vet visits, moves
+- **Problem:** That's just a pet taxi, not Waggle's vision
+- **Verdict:** Out of scope
+
+### Option C: Partner with Cat-Focused Startup
+- **Verdict:** None exist because cats don't want this
+
+## Consequences
+
+### Positive
+- Clear brand identity ("Uber for Dogs" not "Uber for Pets")
+- No engineering resources wasted on impossible UX
+- Dogs remain primary focus
+
+### Negative
+- Lost 2 potential investors (cat people)
+- Occasional social media criticism ("speciesist!")
+- Can't serve multi-pet households with cats (dogs only)
+
+### The Official Response
+
+When asked about cats, our PR-approved response is:
+
+> "Waggle is purpose-built for dogs. Cats are wonderful companions, but they don't share dogs' desire for independent mobility. We respect cats' preference to stay exactly where they are."
+
+## Appendix: Selected Cat Beta Feedback
+
+> "My cat looked at the collar like I had personally insulted her." — Beta participant #12
+
+> "Mittens uses the collar as a bed now. Still hasn't pressed the button." — Beta participant #28
+
+> "I think my cat pressed the button to spite me, then refused to get in the car. Classic." — Beta participant #41

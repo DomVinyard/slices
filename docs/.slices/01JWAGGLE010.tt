@@ -1,0 +1,40 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE010
+  created_at: "2023-06-15T10:00:00Z"
+  title: "Decision Log"
+  summary: "Append-only history of all major product decisions"
+  kind: context
+  body:
+    type: jsonl
+  contract:
+    purpose: "Chronological record of decisions with context and outcomes"
+    exclude: ["implementation details", "code"]
+    format: "JSONL with date, decision, context, outcome fields"
+    write: supersede
+  links:
+    - rel: parent
+      to: 01JWAGGLE001
+    - rel: references
+      to: 01JWAGGLE011
+      label: "Bark Recognition ADR"
+    - rel: references
+      to: 01JWAGGLE012
+      label: "Destination Learning ADR"
+    - rel: references
+      to: 01JWAGGLE013
+      label: "Treat Economy ADR"
+    - rel: references
+      to: 01JWAGGLE014
+      label: "Cat Policy ADR"
+---
+
+{"id": "DEC-001", "date": "2023-06-15", "decision": "Dogs only, no cats", "context": "Investors asked about multi-species support", "outcome": "Validated by beta test - cats don't want rides", "adr": "01JWAGGLE014"}
+{"id": "DEC-002", "date": "2023-07-22", "decision": "Button boop + bark confirmation for ride requests", "context": "Too many false positives from button-only", "outcome": "False positive rate dropped from 34% to 2%", "adr": "01JWAGGLE011"}
+{"id": "DEC-003", "date": "2023-08-10", "decision": "Per-ride treat budget instead of unlimited", "context": "Dogs gaming the system, one ate 47 treats in one ride", "outcome": "Treats per ride capped at 15, driver discretion within budget", "adr": "01JWAGGLE013"}
+{"id": "DEC-004", "date": "2023-09-05", "decision": "Use tail wag frequency for destination satisfaction scoring", "context": "Needed objective measure of ride success", "outcome": "Wag scores correlate 0.87 with repeat visits", "adr": "01JWAGGLE012"}
+{"id": "DEC-005", "date": "2023-10-18", "decision": "Scenic route option for vet visits", "context": "Dogs recognizing vet address and refusing to confirm", "outcome": "Vet ride completion rate up 23%"}
+{"id": "DEC-006", "date": "2023-11-30", "decision": "Squirrel mode for mid-ride distractions", "context": "17 incidents of dogs trying to exit moving vehicles", "outcome": "Zero exit attempts since implementation"}
+{"id": "DEC-007", "date": "2024-01-08", "decision": "Pack Walks feature for multi-dog households", "context": "Users requesting rides for multiple dogs", "outcome": "In development - see current sprint"}
+{"id": "DEC-008", "date": "2024-01-20", "decision": "Playdate coordination - dogs can request rides to friends", "context": "Dogs learned friends' addresses, requesting solo", "outcome": "Building notification system for friend's human"}

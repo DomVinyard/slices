@@ -1,0 +1,126 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE020
+  created_at: "2023-08-15T10:00:00Z"
+  title: "Ride Matching"
+  summary: "Algorithm that matches dogs to nearby dog-friendly drivers"
+  kind: pointer
+  body:
+    type: code
+    code:
+      lang: go
+      extension: go
+  contract:
+    purpose: "Pointer to ride matching service implementation"
+    exclude: ["business logic documentation", "API specs"]
+    format: "Code reference with file path and key function signatures"
+    write: replace
+  links:
+    - rel: parent
+      to: 01JWAGGLE002
+      label: "Architecture"
+    - rel: references
+      to: 01JWAGGLE024
+      label: "Dog Profile Schema"
+---
+
+# Ride Matching Service
+
+**Location:** `services/matching/`
+
+## Key Files
+
+- `services/matching/matcher.go` - Core matching algorithm
+- `services/matching/scorer.go` - Driver scoring functions
+- `services/matching/geo.go` - Geospatial queries
+
+## Core Algorithm
+
+```go
+// matcher.go
+
+type MatchRequest struct {
+    DogID       string
+    Pickup      Location
+    Destination Location
+    DogSize     DogSize
+    Urgency     UrgencyLevel
+}
+
+type MatchResult struct {
+    DriverID    string
+    ETA         time.Duration
+    Score       float64
+    TreatStock  int
+}
+
+// FindBestDriver returns the optimal driver for a ride request
+// Considers: distance, dog size compatibility, driver rating,
+// treat stock, and recent ride history
+func FindBestDriver(ctx context.Context, req MatchRequest) (*MatchResult, error) {
+    // 1. Query drivers within radius (PostGIS)
+    // 2. Filter by dog size compatibility
+    // 3. Score each candidate
+    // 4. Return highest scorer
+}
+```
+
+## Scoring Function
+
+```go
+// scorer.go
+
+func ScoreDriver(driver Driver, req MatchRequest) float64 {
+    score := 0.0
+    
+    // Distance weight: 40%
+    score += (1 - normalizeDistance(driver.Location, req.Pickup)) * 0.4
+    
+    // Rating weight: 25%
+    score += (driver.Rating / 5.0) * 0.25
+    
+    // Size compatibility: 20%
+    score += sizeCompatibility(driver.VehicleType, req.DogSize) * 0.2
+    
+    // Treat stock: 10%
+    score += (float64(driver.TreatStock) / 50.0) * 0.1
+    
+    // Familiarity bonus: 5%
+    if driver.HasDrivenDog(req.DogID) {
+        score += 0.05
+    }
+    
+    return score
+}
+```
+
+## Geospatial Query
+
+```go
+// geo.go
+
+// FindNearbyDrivers uses PostGIS to find available drivers
+// within the specified radius of the pickup point
+func FindNearbyDrivers(pickup Location, radiusKm float64) ([]Driver, error) {
+    query := `
+        SELECT d.* FROM drivers d
+        WHERE d.status = 'available'
+        AND ST_DWithin(
+            d.location::geography,
+            ST_MakePoint($1, $2)::geography,
+            $3 * 1000
+        )
+        ORDER BY d.location <-> ST_MakePoint($1, $2)
+        LIMIT 20
+    `
+    // ...
+}
+```
+
+## Special Cases
+
+- **Large dogs (>100 lbs)**: Only SUV/van drivers
+- **Reactive dogs**: Experienced drivers only (rating > 4.8)
+- **Pack rides**: Multiple dog compatibility check
+- **Vet rides**: Prioritize calm, patient drivers

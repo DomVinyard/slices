@@ -1,0 +1,39 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE051
+  created_at: "2024-01-28T14:30:00Z"
+  title: "Destination Rankings"
+  summary: "Top destinations ranked by visit count and dog satisfaction"
+  kind: context
+  body:
+    type: csv
+  contract:
+    purpose: "Track popular destinations and dog satisfaction by location"
+    exclude: ["exact addresses", "owner PII"]
+    format: "CSV with destination metrics"
+    write: replace
+  links:
+    - rel: parent
+      to: 01JWAGGLE005
+      label: "Popular Destinations"
+    - rel: references
+      to: 01JWAGGLE042
+      label: "Destination Guide"
+---
+rank,destination,type,total_visits,avg_wag_score,repeat_rate_pct,peak_hour,notes
+1,Riverside Dog Park,dog_park,12847,9.2,89,9am,Best mud puddles in the city
+2,Barkley's Daycare,daycare,8934,8.8,94,8am,Premium facility - dogs love the pool
+3,Central Bark,dog_park,7621,8.5,82,4pm,Good for senior dogs - paved paths
+4,PetSmart Groomer - Downtown,groomer,5234,6.2,71,10am,Necessary evil - treats help
+5,Charlie's House,friend,4521,9.0,88,2pm,Popular playdate destination
+6,Maple Street Dog Run,dog_park,4102,8.8,85,5pm,Tight-knit community
+7,Happy Tails Daycare,daycare,3890,8.1,78,8am,Budget option - good value
+8,Dr. Pawston's Vet,vet,3456,2.1,12,11am,Vet Mode helps - scenic route popular
+9,Luna's House,friend,2987,9.1,91,3pm,Best friend visits
+10,Pet Paradise Beach,beach,2341,9.5,67,10am,Seasonal - summer only
+11,Fluffy's Boutique Groomer,groomer,2102,5.8,45,11am,Fancy but dogs don't care
+12,Woof & Wag Training,training,1876,7.2,82,6pm,Obedience classes
+13,Paws & Claws Pet Store,pet_store,1654,8.4,56,2pm,Treat shopping trips
+14,Mountain Trail Head,hiking,1432,9.3,72,7am,Weekend adventure rides
+15,Happy Tails Emergency Vet,vet,892,1.8,5,varies,Emergency only - lowest wag scores

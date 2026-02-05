@@ -1,0 +1,110 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE011
+  created_at: "2023-07-22T14:00:00Z"
+  title: "ADR: Bark Recognition"
+  summary: "How we detect 'I want to go!' barks vs random barking"
+  kind: context
+  body:
+    type: markdown
+  contract:
+    purpose: "Architecture decision record for bark-based ride confirmation"
+    exclude: ["ML model weights", "training data"]
+    format: "ADR format with context, decision, consequences"
+    write: append
+  links:
+    - rel: parent
+      to: 01JWAGGLE010
+      label: "Decision Log"
+    - rel: parent
+      to: 01JWAGGLE002
+      label: "Architecture"
+    - rel: implements
+      to: 01JWAGGLE021
+      label: "Bark Recognizer Code"
+---
+
+# ADR-011: Bark Recognition for Ride Confirmation
+
+**Status:** Accepted  
+**Date:** 2023-07-22  
+**Deciders:** Sarah Chen, Lisa Park, Dr. Patricia Woofson
+
+## Context
+
+Dogs press the collar button for many reasons—curiosity, accident, boredom. We needed a way to confirm the dog actually wants a ride, not just investigating a shiny button.
+
+Early beta data showed a 34% false positive rate with button-only activation:
+- 12% accidental boops (rolling, scratching)
+- 15% curiosity boops (what does this do?)
+- 7% boredom boops (human not paying attention)
+
+## Options Considered
+
+### Option A: Button-Only
+- **Pros:** Simple, always works
+- **Cons:** 34% false positive rate, wasted driver time
+
+### Option B: Any Bark After Button
+- **Pros:** Adds confirmation layer
+- **Cons:** Dogs bark constantly, still high false positive
+
+### Option C: Trained Bark Pattern (Chosen)
+- **Pros:** Dogs learn specific pattern, low false positive
+- **Cons:** Requires ML model, training period for dogs
+
+### Option D: Human Confirmation Required
+- **Pros:** Zero false positives
+- **Cons:** Defeats purpose—dogs should order their own rides
+
+## Decision
+
+**Button boop + excited bark within 3 seconds = ride request**
+
+The bark must match our "ride request" pattern:
+- Frequency: 2-4 barks
+- Pitch: Elevated (excited, not warning)
+- Cadence: Quick succession
+- Duration: Under 3 seconds total
+
+## Implementation
+
+1. On-collar ML model (TensorFlow Lite) does initial classification
+2. Audio sent to cloud for verification
+3. If both agree → ride request confirmed
+4. If disagreement → prompt for re-boop
+
+### Training the Dogs
+
+Dr. Woofson's research showed dogs learn the pattern in ~3 days:
+1. Button boop → treat (association)
+2. Button boop + bark → ride (reinforcement)
+3. Button boop + excited bark → faster ride (optimization)
+
+Dogs figured out the excited bark gets faster results.
+
+## Consequences
+
+### Positive
+- False positive rate dropped to 2%
+- Dogs learned pattern quickly
+- Drivers trust incoming requests
+
+### Negative
+- Some quiet dogs struggle (added visual confirmation option)
+- Model needs breed-specific tuning (Basenjis don't bark)
+- Battery drain from always-on microphone (mitigated with wake word)
+
+### Neutral
+- Added 0.8 seconds to request flow
+- Requires periodic model updates as we learn more bark patterns
+
+## Metrics
+
+| Metric | Before | After |
+|--------|--------|-------|
+| False positive rate | 34% | 2% |
+| Time to confirm | 0s | 0.8s |
+| Dog learning time | N/A | 3 days avg |
+| Quiet dog accommodation | N/A | 98% via visual option |

@@ -1,0 +1,251 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE041
+  created_at: "2023-10-20T14:00:00Z"
+  title: "Driver Training Guide"
+  summary: "How to handle excited dogs, treat protocol, and squirrel management"
+  kind: context
+  body:
+    type: markdown
+  contract:
+    purpose: "Training materials for Waggle drivers"
+    exclude: ["internal HR policies", "compensation details"]
+    format: "Training guide with scenarios and protocols"
+    write: append
+  links:
+    - rel: parent
+      to: 01JWAGGLE006
+      label: "Passenger Safety"
+    - rel: references
+      to: 01JWAGGLE034
+      label: "Squirrel Incidents Session"
+    - rel: references
+      to: 01JWAGGLE013
+      label: "Treat Economy ADR"
+---
+
+# Waggle Driver Training Guide
+
+Welcome to the Waggle driver family! This guide will prepare you to give dogs the best rides of their lives.
+
+## The Waggle Philosophy
+
+> "Every dog deserves to go where they want to go."
+
+You're not just a driver—you're a dog's ticket to adventure. The park, their best friend's house, even the groomer (we'll help with that one). Your job is to make every ride safe, comfortable, and tail-wag-worthy.
+
+## Before Your First Ride
+
+### Vehicle Preparation
+
+1. **Seat covers** - Waterproof, easy to clean
+2. **Treat dispenser** - Installed and loaded (we provide)
+3. **Temperature check** - AC working, rear vents clear
+4. **Window locks** - Engaged before every ride
+5. **Child locks** - Always on
+
+### Your Treat Dispenser
+
+The Waggle Treat Dispenser mounts in your center console. Key things:
+
+- Holds 50 treats
+- Dispensed via your driver app
+- Auto-dispenses on pickup and arrival
+- You control the rest of the budget
+
+**Treat Budget Per Ride:**
+- Standard ride: 10 treats
+- Long ride (>20 min): 15 treats
+- Vet ride: 20 treats
+- First-time rider: 15 treats
+
+Use treats to reward good behavior, not to bribe. Dogs learn fast!
+
+## Pickup Protocol
+
+### Arriving at Pickup
+
+1. Park safely, stay in vehicle
+2. Text the owner "I'm outside! 🐕"
+3. Owner brings dog to car
+4. Verify it's the right dog (check app photo)
+5. Let the dog sniff you through the window
+6. Open door, let dog enter on their own
+7. Secure restraint (harness or carrier)
+8. Treats auto-dispense—say "Good dog!"
+9. Confirm pickup in app
+
+### If the Dog Won't Get In
+
+Some dogs are hesitant. Try:
+1. Let them sniff the car first
+2. Show them a treat (don't give yet)
+3. Let owner encourage them
+4. If still refusing after 3 minutes, contact support
+
+Never force a dog into the vehicle.
+
+## During the Ride
+
+### The Calm Driver
+
+Dogs read your energy. If you're calm, they're calm.
+
+- Keep music low and soothing
+- Avoid sudden movements
+- Talk to them occasionally: "Good dog, almost there!"
+- Avoid honking unless necessary
+
+### Temperature
+
+Dogs overheat easily. Keep the car at 68-72°F.
+
+- Check on dog in rearview mirror regularly
+- Heavy panting = too hot, increase AC
+- Shivering = too cold (rare but possible)
+
+### When to Dispense Treats
+
+Good times:
+- When they settle down nicely
+- After ignoring a distraction
+- Midway through a long ride
+- If they seem anxious (calming treat)
+
+Bad times:
+- When they're barking (rewards barking)
+- When they're pawing at you (rewards demanding behavior)
+- If they've already maxed the budget
+
+### The Dog in Your Rearview
+
+Check every 2-3 minutes:
+- Are they comfortable?
+- Tail wag level?
+- Any signs of distress?
+- Motion sickness symptoms? (drooling, restlessness)
+
+## Handling Challenges
+
+### Anxious Dogs
+
+Signs: panting, whining, pacing, tucked tail
+
+Response:
+1. Speak calmly: "It's okay, buddy"
+2. Dispense a calming treat
+3. Turn on "Calming Mode" in app (plays Through a Dog's Ear)
+4. If severe: pull over safely, give them a break
+
+### Car Sick Dogs
+
+Signs: drooling, lip licking, restlessness, then... the inevitable
+
+Response:
+1. Pull over ASAP
+2. Let them out on leash for fresh air
+3. Offer small amount of water
+4. Clean up with supplies from your kit
+5. Report in app—no penalty for shortened rides
+
+### SQUIRREL PROTOCOL 🐿️
+
+When you see a squirrel:
+
+1. **Stay calm** - Don't react visibly
+2. **Press "Squirrel Alert"** in the app
+   - This triggers auto-treat
+   - Starts calming music
+3. **Say calmly**: "It's okay, just a friend"
+4. **DO NOT**:
+   - Point at the squirrel
+   - Say the word "squirrel" (dogs know this word)
+   - Open windows
+
+If dog becomes highly agitated:
+1. Pull over safely when possible
+2. Wait 2-3 minutes for dog to calm
+3. Extra treats as needed
+4. Report incident in app
+
+### Aggressive Behavior
+
+Very rare, but if a dog shows aggression (growling, snapping):
+
+1. Do not reach toward them
+2. Pull over safely
+3. Stay in your seat
+4. Contact Waggle support immediately
+5. Wait for owner or support to arrive
+
+Your safety comes first. Never put yourself at risk.
+
+## Drop-off Protocol
+
+### Arriving at Destination
+
+1. Park safely
+2. Do NOT open doors yet
+3. Treats auto-dispense—"We're here! Good dog!"
+4. Wait for owner/recipient to approach
+5. Confirm handoff in app
+6. Then open door
+7. Let owner take dog out
+8. Confirm drop-off complete
+
+### If No One is There
+
+For friend's houses or playdates:
+1. Text owner "No one here to receive [Dog Name]"
+2. Wait 5 minutes
+3. If still no answer, contact Waggle support
+4. May need to return dog home
+
+## Special Ride Types
+
+### Vet Rides
+
+Dogs don't like the vet. Help them:
+- Extra treats are automatically budgeted
+- Use scenic route if enabled (longer but less stressful)
+- Extra calm energy from you
+- It's okay if they're anxious—just be patient
+
+### Pack Rides (Multiple Dogs)
+
+- Confirm all dogs fit comfortably
+- Check for compatibility notes in app
+- Keep dogs separated if needed
+- Treats for all!
+
+### Playdate Drop-offs
+
+A dog visiting a friend:
+- Recipient human must be present
+- Confirm dog recognizes the friend (happy tail wag)
+- Get photo confirmation if requested
+
+## Rating Your Passengers
+
+After each ride, rate your passenger:
+
+⭐⭐⭐⭐⭐ - Perfect angel, would drive again
+⭐⭐⭐⭐ - Good dog, minor excitement
+⭐⭐⭐ - Average, some challenges
+⭐⭐ - Difficult, needs notes for future drivers
+⭐ - Serious issues, contact support
+
+Your ratings help us match dogs with the right drivers.
+
+## Getting Help
+
+- **In-app support**: Tap the help icon
+- **Phone**: 1-800-WAG-HELP
+- **Emergency**: 911 first, then us
+
+You're never alone. We're here to help you and your furry passengers have great rides!
+
+---
+
+*Thank you for driving with Waggle. Now go make some tails wag! 🐕💨*

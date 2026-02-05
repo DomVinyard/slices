@@ -1,0 +1,174 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE033
+  created_at: "2023-10-18T11:00:00Z"
+  title: "Session: Vet Anxiety"
+  summary: "Agent solving the problem of dogs refusing vet rides"
+  kind: context
+  body:
+    type: conversation
+    conversation:
+      participants: ["agent", "sarah", "patricia"]
+      agent_id: "waggle-dev-agent"
+      session_id: "sess_vet_anxiety_001"
+      format: "markdown"
+      includes_tool_calls: true
+  contract:
+    purpose: "Design session for vet ride anxiety mitigation"
+    exclude: ["unrelated conversations"]
+    format: "Conversation with behavioral research and solutions"
+    write: append
+  links:
+    - rel: parent
+      to: 01JWAGGLE030
+      label: "Current Sprint"
+    - rel: references
+      to: 01JWAGGLE013
+      label: "Treat Economy ADR"
+    - rel: references
+      to: 01JWAGGLE005
+      label: "Popular Destinations"
+---
+
+# Session: Vet Anxiety Problem
+
+## Context
+
+Dogs have learned to recognize vet addresses. When the app predicts "vet" as destination, dogs are refusing to confirm the ride. Vet ride completion rate has dropped to 34%.
+
+---
+
+**Sarah:** We have a vet problem. Dogs are too smart.
+
+**Dr. Patricia Woofson:** I've been analyzing the data. Dogs are showing anticipatory anxiety behaviors when the destination prediction shows the vet. They've learned to associate the app flow with the destination.
+
+**Agent:** Let me look at the ride data.
+
+[Tool: query ride completion by destination type]
+
+```
+Destination Type    | Completion Rate
+--------------------|----------------
+Dog Park            | 97%
+Daycare             | 94%
+Groomer             | 78%
+Friend's House      | 96%
+Vet                 | 34%  ← Problem
+```
+
+**Agent:** What specific behaviors are you seeing?
+
+**Patricia:** Three patterns:
+
+1. **Pre-boop avoidance** - Dogs see owner open app, walk away from collar
+2. **Confirmation refusal** - Dogs boop but won't bark to confirm
+3. **Mid-ride anxiety** - Dogs that do go show elevated stress (panting, whining)
+
+**Sarah:** Can we just... not show them it's the vet?
+
+**Agent:** That's actually one approach. "Vet Mode" features:
+
+### Proposed: Vet Mode
+
+**1. Destination Obscuring**
+- Don't display destination in collar feedback
+- No "Going to Dr. Pawston's!" announcement
+
+**2. Scenic Route**
+- Approach vet from different direction than usual
+- Prevents "I know this turn" recognition
+- Trade-off: Longer ride, more cost
+
+**3. Enhanced Treat Protocol**
+- Auto-boost treat budget to 20 for vet rides
+- Pre-dispense treats during approach
+- Continuous low-rate treats in waiting room
+
+**4. Familiar Driver Preference**
+- Match with driver dog has had positive experiences with
+- Familiar face = reduced anxiety
+
+**Patricia:** I like the multi-pronged approach. Can we also add calming features?
+
+**Agent:** Yes:
+
+**5. Calming Mode**
+- Through-a-Dog's-Ear music (clinically tested)
+- Reduced AC fan noise
+- Lavender scent diffuser (optional, driver-equipped)
+
+**Sarah:** What about the humans? They need to be able to book vet rides even when the dog won't confirm.
+
+**Agent:** Good point. Add:
+
+**6. Human Override**
+- Owner can force-book vet ride without dog confirmation
+- Marked as "owner-initiated" in the system
+- Dog still gets all the anxiety mitigation features
+
+**Patricia:** One more thing - we should track post-vet wag scores. If the dog had a good experience despite the destination, we want to capture that. It might help with future vet rides.
+
+**Agent:** Agreed. I'll add:
+
+**7. Vet Experience Tracking**
+- Separate wag score category for vet visits
+- "Post-vet relief" score (usually high)
+- Track if dog's vet anxiety decreases over time
+
+---
+
+## Implementation Plan
+
+```typescript
+interface VetModeConfig {
+  enabled: boolean;
+  
+  // Destination handling
+  hideDestinationFromCollar: boolean;
+  useScenicRoute: boolean;
+  scenicRouteMaxOverhead: number;  // minutes
+  
+  // Comfort features
+  treatBudgetBoost: number;        // extra treats
+  calmingMusicEnabled: boolean;
+  preferFamiliarDriver: boolean;
+  
+  // Override
+  allowOwnerForceBook: boolean;
+}
+
+// Default vet mode config
+const VET_MODE_DEFAULTS: VetModeConfig = {
+  enabled: true,
+  hideDestinationFromCollar: true,
+  useScenicRoute: true,
+  scenicRouteMaxOverhead: 10,
+  treatBudgetBoost: 10,
+  calmingMusicEnabled: true,
+  preferFamiliarDriver: true,
+  allowOwnerForceBook: true,
+};
+```
+
+---
+
+## Decisions Made
+
+1. Implement "Vet Mode" with destination obscuring
+2. Scenic route option (max 10 min overhead by default)
+3. Treat budget auto-boost to 20 for vet rides
+4. Owner can force-book without dog confirmation
+5. Track vet-specific anxiety metrics over time
+
+## Results (Post-Implementation)
+
+After 2 weeks of Vet Mode:
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Vet ride completion | 34% | 67% |
+| Avg vet ride wag score | 2.1 | 4.8 |
+| Owner satisfaction (vet rides) | 2.3/5 | 4.1/5 |
+
+Dogs are still reluctant, but the experience is much better.

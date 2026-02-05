@@ -1,0 +1,221 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE007
+  created_at: "2023-07-03T15:00:00Z"
+  title: "API Reference"
+  summary: "REST endpoints for rides, dogs, destinations, and treats"
+  kind: context
+  body:
+    type: markdown
+  contract:
+    purpose: "API documentation for Waggle services"
+    exclude: ["internal endpoints", "admin APIs"]
+    format: "RESTful endpoint documentation with examples"
+    write: replace
+  links:
+    - rel: parent
+      to: 01JWAGGLE001
+    - rel: references
+      to: 01JWAGGLE003
+      label: "Tech Stack"
+---
+
+# Waggle API Reference
+
+Base URL: `https://api.waggle.dog/v1`
+
+## Authentication
+
+All requests require a Bearer token:
+```
+Authorization: Bearer <access_token>
+```
+
+## Rides
+
+### Request a Ride
+
+```
+POST /rides
+```
+
+**Body:**
+```json
+{
+  "dog_id": "dog_01HXYZ",
+  "destination_id": "dest_riverside_park",
+  "requested_by": "collar_boop",
+  "bark_verified": true,
+  "tail_wag_score": 8.5
+}
+```
+
+**Response:**
+```json
+{
+  "ride_id": "ride_01ABC",
+  "status": "matching",
+  "estimated_pickup": "2024-01-15T14:30:00Z",
+  "estimated_arrival": "2024-01-15T14:45:00Z"
+}
+```
+
+### Get Ride Status
+
+```
+GET /rides/{ride_id}
+```
+
+**Response:**
+```json
+{
+  "ride_id": "ride_01ABC",
+  "status": "in_progress",
+  "driver": {
+    "name": "Mike",
+    "rating": 4.9,
+    "vehicle": "Blue Honda CR-V",
+    "treats_remaining": 12
+  },
+  "passenger": {
+    "name": "Buster",
+    "current_tail_wag": 9.1
+  },
+  "eta_minutes": 8
+}
+```
+
+### Cancel Ride
+
+```
+DELETE /rides/{ride_id}
+```
+
+## Dogs
+
+### Register a Dog
+
+```
+POST /dogs
+```
+
+**Body:**
+```json
+{
+  "name": "Buster",
+  "breed": "Golden Retriever",
+  "size": "large",
+  "weight_lbs": 72,
+  "favorite_treat": "bacon_bits",
+  "known_friends": ["dog_luna", "dog_charlie"],
+  "vet_notes": "Good boy, no restrictions"
+}
+```
+
+### Update Dog Profile
+
+```
+PATCH /dogs/{dog_id}
+```
+
+### Get Dog's Ride History
+
+```
+GET /dogs/{dog_id}/rides?limit=10
+```
+
+## Destinations
+
+### List Favorite Destinations
+
+```
+GET /dogs/{dog_id}/destinations
+```
+
+**Response:**
+```json
+{
+  "destinations": [
+    {
+      "id": "dest_riverside",
+      "name": "Riverside Dog Park",
+      "type": "dog_park",
+      "visit_count": 47,
+      "avg_tail_wag": 9.2,
+      "last_visit": "2024-01-14"
+    }
+  ]
+}
+```
+
+### Predict Destination
+
+```
+POST /dogs/{dog_id}/destinations/predict
+```
+
+**Body:**
+```json
+{
+  "time_of_day": "morning",
+  "day_of_week": "saturday",
+  "weather": "sunny",
+  "tail_wag_at_request": 8.7
+}
+```
+
+**Response:**
+```json
+{
+  "predictions": [
+    {"destination": "Riverside Dog Park", "confidence": 0.82},
+    {"destination": "Charlie's House", "confidence": 0.12},
+    {"destination": "Groomer", "confidence": 0.06}
+  ]
+}
+```
+
+## Treats
+
+### Dispense Treat
+
+```
+POST /rides/{ride_id}/treats
+```
+
+**Body:**
+```json
+{
+  "count": 1,
+  "reason": "good_behavior"
+}
+```
+
+### Get Treat Budget
+
+```
+GET /rides/{ride_id}/treats/budget
+```
+
+**Response:**
+```json
+{
+  "total_budget": 15,
+  "dispensed": 3,
+  "remaining": 12,
+  "auto_dispense_enabled": true
+}
+```
+
+## Webhooks
+
+Subscribe to events:
+
+- `ride.requested` - Dog booped the button
+- `ride.matched` - Driver assigned
+- `ride.started` - Dog picked up
+- `ride.completed` - Destination reached
+- `tail_wag.alert` - Unusual wag pattern detected
+- `treat.dispensed` - Treat given
+- `squirrel.detected` - Driver reported squirrel sighting

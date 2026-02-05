@@ -1,0 +1,168 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE021
+  created_at: "2023-08-20T14:30:00Z"
+  title: "Bark Recognizer"
+  summary: "ML model that distinguishes ride-request barks from other barks"
+  kind: pointer
+  body:
+    type: code
+    code:
+      lang: python
+      extension: py
+  contract:
+    purpose: "Pointer to bark recognition ML service"
+    exclude: ["model weights", "training data"]
+    format: "Code reference with inference pipeline"
+    write: replace
+  links:
+    - rel: parent
+      to: 01JWAGGLE002
+      label: "Architecture"
+    - rel: implements
+      to: 01JWAGGLE011
+      label: "Bark Recognition ADR"
+---
+
+# Bark Recognition Service
+
+**Location:** `ml/bark-recognition/`
+
+## Key Files
+
+- `ml/bark-recognition/model.py` - TensorFlow model definition
+- `ml/bark-recognition/inference.py` - Real-time inference
+- `ml/bark-recognition/features.py` - Audio feature extraction
+- `collar-firmware/src/bark_detect.c` - On-device pre-filter
+
+## Model Architecture
+
+```python
+# model.py
+
+import tensorflow as tf
+
+def create_bark_classifier():
+    """
+    CNN-based bark classifier
+    Input: 3-second mel spectrogram (128 x 128)
+    Output: probability of ride-request bark
+    """
+    model = tf.keras.Sequential([
+        tf.keras.layers.Conv2D(32, 3, activation='relu', input_shape=(128, 128, 1)),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Conv2D(64, 3, activation='relu'),
+        tf.keras.layers.MaxPooling2D(),
+        tf.keras.layers.Conv2D(64, 3, activation='relu'),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(1, activation='sigmoid')
+    ])
+    return model
+```
+
+## Inference Pipeline
+
+```python
+# inference.py
+
+from features import extract_mel_spectrogram
+from model import load_model
+
+class BarkClassifier:
+    def __init__(self):
+        self.model = load_model('models/bark_v3.h5')
+        self.threshold = 0.85
+    
+    def classify(self, audio_bytes: bytes) -> dict:
+        """
+        Classify audio as ride-request bark or not.
+        
+        Returns:
+            {
+                "is_ride_request": bool,
+                "confidence": float,
+                "bark_count": int,
+                "characteristics": {
+                    "pitch": "high" | "medium" | "low",
+                    "excitement": float,
+                    "duration_ms": int
+                }
+            }
+        """
+        spectrogram = extract_mel_spectrogram(audio_bytes)
+        prediction = self.model.predict(spectrogram)
+        
+        return {
+            "is_ride_request": prediction > self.threshold,
+            "confidence": float(prediction),
+            "bark_count": count_barks(audio_bytes),
+            "characteristics": analyze_bark_features(audio_bytes)
+        }
+```
+
+## Feature Extraction
+
+```python
+# features.py
+
+import librosa
+import numpy as np
+
+def extract_mel_spectrogram(audio_bytes: bytes) -> np.ndarray:
+    """Convert raw audio to mel spectrogram for model input."""
+    y, sr = librosa.load(io.BytesIO(audio_bytes), sr=16000)
+    
+    mel_spec = librosa.feature.melspectrogram(
+        y=y, sr=sr,
+        n_mels=128,
+        fmax=8000
+    )
+    
+    mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+    return mel_spec_db.reshape(128, 128, 1)
+
+def analyze_bark_features(audio_bytes: bytes) -> dict:
+    """Extract interpretable bark characteristics."""
+    y, sr = librosa.load(io.BytesIO(audio_bytes), sr=16000)
+    
+    pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
+    avg_pitch = np.mean(pitches[pitches > 0])
+    
+    return {
+        "pitch": categorize_pitch(avg_pitch),
+        "excitement": calculate_excitement(y),
+        "duration_ms": len(y) / sr * 1000
+    }
+```
+
+## On-Device Pre-Filter
+
+```c
+// collar-firmware/src/bark_detect.c
+
+// Runs on Nordic nRF52840
+// Quick filter to avoid sending non-bark audio to cloud
+
+bool is_potential_bark(int16_t* samples, size_t len) {
+    // Check for:
+    // 1. Sufficient volume (> threshold)
+    // 2. Duration in bark range (100ms - 500ms per bark)
+    // 3. Frequency content in dog vocalization range
+    
+    float rms = calculate_rms(samples, len);
+    if (rms < BARK_VOLUME_THRESHOLD) return false;
+    
+    // Only send to cloud if passes pre-filter
+    return check_frequency_content(samples, len);
+}
+```
+
+## Training Data
+
+- 50,000 labeled bark samples
+- 12 breed categories
+- Balanced positive/negative classes
+- Augmented with background noise (traffic, TV, other dogs)

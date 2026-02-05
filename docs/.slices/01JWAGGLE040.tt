@@ -1,0 +1,237 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE040
+  created_at: "2023-10-05T09:00:00Z"
+  title: "Deploy to Production"
+  summary: "Safe deployment checklist including collar firmware OTA"
+  kind: context
+  body:
+    type: routine
+    routine:
+      requirements:
+        - "Access to AWS console"
+        - "Collar firmware signing keys"
+        - "Datadog dashboard access"
+        - "PagerDuty on-call rotation confirmed"
+      steps:
+        - instruction: "Check deployment readiness"
+        - instruction: "Deploy backend services"
+        - instruction: "Deploy mobile app updates"
+        - instruction: "Deploy collar firmware (if needed)"
+        - instruction: "Monitor and verify"
+        - instruction: "Rollback procedure (if needed)"
+  contract:
+    purpose: "Production deployment checklist"
+    exclude: ["development deployments", "staging"]
+    format: "Step-by-step routine with verification"
+    write: replace
+  links:
+    - rel: parent
+      to: 01JWAGGLE002
+      label: "Architecture"
+    - rel: references
+      to: 01JWAGGLE003
+      label: "Tech Stack"
+---
+
+# Deploy to Production
+
+## Pre-Deployment Checklist
+
+- [ ] All tests passing in CI
+- [ ] PR approved by at least 2 engineers
+- [ ] Changelog updated
+- [ ] Feature flags configured
+- [ ] Database migrations tested on staging
+- [ ] On-call engineer confirmed available
+- [ ] No other deployments in progress
+- [ ] Not Friday after 2pm (no Friday deploys!)
+
+## Step 1: Check Deployment Readiness
+
+```bash
+# Check CI status
+gh run list --limit 5
+
+# Verify staging is healthy
+curl https://staging-api.waggle.dog/health
+
+# Check current production version
+curl https://api.waggle.dog/version
+```
+
+**Verify:**
+- All checks green
+- Staging has been tested for at least 2 hours
+- No elevated error rates on staging
+
+## Step 2: Deploy Backend Services
+
+### 2.1 Database Migrations (if any)
+
+```bash
+# Run migrations
+cd services/api
+npm run migrate:prod
+
+# Verify migration success
+npm run migrate:status
+```
+
+### 2.2 Deploy API Services
+
+```bash
+# Deploy via ECS
+aws ecs update-service \
+  --cluster waggle-prod \
+  --service api \
+  --force-new-deployment
+
+# Watch deployment progress
+aws ecs wait services-stable --cluster waggle-prod --services api
+```
+
+### 2.3 Deploy ML Services
+
+```bash
+# Deploy bark recognition service
+aws ecs update-service \
+  --cluster waggle-prod \
+  --service bark-recognition \
+  --force-new-deployment
+```
+
+**Verify:**
+- API health endpoint returns 200
+- No errors in Datadog
+- Ride request latency < 200ms
+
+## Step 3: Deploy Mobile App Updates
+
+### 3.1 Over-the-Air Update (CodePush)
+
+For minor updates that don't require app store review:
+
+```bash
+# Human companion app
+appcenter codepush release-react \
+  -a Waggle/waggle-companion-ios \
+  -d Production
+
+# Driver app
+appcenter codepush release-react \
+  -a Waggle/waggle-driver-ios \
+  -d Production
+```
+
+### 3.2 App Store Release (Major Updates)
+
+- Requires App Store / Play Store review
+- Schedule for Tuesday-Wednesday releases
+- Monitor crash rates for 24 hours post-release
+
+## Step 4: Deploy Collar Firmware (If Needed)
+
+⚠️ **CAUTION**: Firmware updates affect physical devices. Bad firmware can brick collars.
+
+### 4.1 Pre-Firmware Checklist
+
+- [ ] Firmware tested on 10+ internal collars
+- [ ] Battery impact measured (<5% increase acceptable)
+- [ ] Rollback firmware prepared
+- [ ] Staged rollout configured (1% → 10% → 50% → 100%)
+
+### 4.2 Staged OTA Rollout
+
+```bash
+# Stage 1: 1% of collars (internal employees)
+waggle-ota deploy \
+  --firmware v2.4.1 \
+  --percentage 1 \
+  --cohort internal
+
+# Wait 24 hours, check metrics
+
+# Stage 2: 10% of collars
+waggle-ota deploy \
+  --firmware v2.4.1 \
+  --percentage 10
+
+# Wait 48 hours
+
+# Stage 3: 50%, then 100%
+```
+
+### 4.3 Firmware Rollback
+
+If issues detected:
+
+```bash
+waggle-ota rollback --to-version v2.4.0
+```
+
+## Step 5: Monitor and Verify
+
+### 5.1 Datadog Dashboard
+
+Open: https://app.datadoghq.com/dashboard/waggle-prod
+
+Monitor for 30 minutes:
+- [ ] Request latency normal
+- [ ] Error rate < 0.1%
+- [ ] No new error types
+- [ ] Ride completion rate stable
+- [ ] Treat dispenser success rate stable
+
+### 5.2 Key Metrics to Watch
+
+| Metric | Normal Range | Alert Threshold |
+|--------|--------------|-----------------|
+| API latency (p99) | < 200ms | > 500ms |
+| Error rate | < 0.1% | > 1% |
+| Ride completion | > 90% | < 80% |
+| Collar connection success | > 99% | < 95% |
+| Bark recognition accuracy | > 95% | < 90% |
+
+### 5.3 Smoke Tests
+
+```bash
+# Run production smoke tests
+npm run test:smoke:prod
+```
+
+## Step 6: Rollback Procedure
+
+If issues are detected:
+
+### Backend Rollback
+
+```bash
+# Revert to previous task definition
+aws ecs update-service \
+  --cluster waggle-prod \
+  --service api \
+  --task-definition waggle-api:PREVIOUS_VERSION
+```
+
+### Database Rollback
+
+```bash
+# Only if migration caused issues
+npm run migrate:rollback:prod
+```
+
+### Mobile Rollback
+
+```bash
+# CodePush rollback
+appcenter codepush rollback -a Waggle/waggle-companion-ios Production
+```
+
+## Post-Deployment
+
+- [ ] Update #deploys Slack channel
+- [ ] Close related Jira tickets
+- [ ] Monitor for 24 hours
+- [ ] If Friday, prepare for weekend on-call

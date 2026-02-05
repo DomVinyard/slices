@@ -1,0 +1,122 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE012
+  created_at: "2023-09-05T11:30:00Z"
+  title: "ADR: Destination Learning"
+  summary: "Tail wag sensor + repeat visits = favorite places"
+  kind: context
+  body:
+    type: markdown
+  contract:
+    purpose: "Architecture decision record for ML-based destination prediction"
+    exclude: ["model architecture details", "training pipeline"]
+    format: "ADR format with context, decision, consequences"
+    write: append
+  links:
+    - rel: parent
+      to: 01JWAGGLE010
+      label: "Decision Log"
+    - rel: parent
+      to: 01JWAGGLE002
+      label: "Architecture"
+    - rel: implements
+      to: 01JWAGGLE023
+      label: "Tail Wag Analyzer Code"
+---
+
+# ADR-012: Destination Learning via Tail Wag Analysis
+
+**Status:** Accepted  
+**Date:** 2023-09-05  
+**Deciders:** Sarah Chen, Marcus Thompson, Lisa Park
+
+## Context
+
+Dogs can't type addresses. We needed a way to:
+1. Learn where dogs like to go
+2. Predict destination from context
+3. Measure satisfaction to improve predictions
+
+Early approach was human-curated favorites list—but dogs' preferences change, and humans don't always know what their dog wants.
+
+## Options Considered
+
+### Option A: Human-Curated Favorites Only
+- **Pros:** Simple, explicit
+- **Cons:** Doesn't adapt, humans guess wrong
+
+### Option B: Repeat Visit Frequency
+- **Pros:** Objective measure
+- **Cons:** Doesn't capture satisfaction (vet visits repeat but aren't wanted)
+
+### Option C: Tail Wag Analysis (Chosen)
+- **Pros:** Objective satisfaction signal, adapts over time
+- **Cons:** Requires accelerometer, ML model, validation
+
+### Option D: Post-Ride Human Rating
+- **Pros:** Direct feedback
+- **Cons:** Humans weren't there, can't assess dog's experience
+
+## Decision
+
+**Use tail wag frequency and pattern at destination arrival as satisfaction signal.**
+
+The accelerometer in the Waggle Collar measures:
+- Wag frequency (wags per second)
+- Wag amplitude (how wide)
+- Wag duration (how long after arrival)
+
+Combined into a 0-10 "Wag Score" that feeds into destination ranking.
+
+## Algorithm
+
+```
+destination_score = (
+  0.4 * arrival_wag_score +
+  0.3 * historical_wag_avg +
+  0.2 * visit_frequency +
+  0.1 * time_spent_at_destination
+)
+```
+
+Predictions use:
+- Time of day (dogs have routines)
+- Day of week (weekends = park, weekdays = daycare)
+- Weather (rain = lower park probability)
+- Recent destinations (variety seeking vs routine)
+- Social graph (friend's location if friend also Waggle user)
+
+## Validation
+
+Dr. Woofson's team validated wag scores against observed behavior:
+
+| Behavior | Avg Wag Score |
+|----------|---------------|
+| Running into dog park | 9.2 |
+| Greeting dog friend | 8.8 |
+| Arriving at daycare | 8.1 |
+| Post-groomer (relief) | 7.4 |
+| Vet waiting room | 2.1 |
+| Wrong destination | 3.4 |
+
+Correlation between wag score and repeat visit request: **0.87**
+
+## Consequences
+
+### Positive
+- Destination prediction accuracy: 82% top choice
+- Dogs get where they want faster
+- Discovered dogs have sophisticated preferences (weather, time, social)
+
+### Negative
+- Some breeds wag differently (Bulldogs = lower amplitude)
+- Stub-tailed dogs need alternative (body wiggle detection)
+- Cold weather = less wagging (thermal compensation added)
+
+### Edge Cases Handled
+
+1. **Vet visits**: Low wag doesn't mean bad prediction—context matters
+2. **New destinations**: Cold start with exploration bonus
+3. **Moving friends**: Dogs request rides to old addresses (sad, but we handle it)
+4. **Seasonal shifts**: Summer = more park, winter = more indoor destinations

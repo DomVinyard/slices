@@ -1,0 +1,134 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE013
+  created_at: "2023-08-10T16:00:00Z"
+  title: "ADR: Treat Economy"
+  summary: "Treats per ride, driver budgets, and bribery limits"
+  kind: context
+  body:
+    type: markdown
+  contract:
+    purpose: "Architecture decision record for in-ride treat dispensing"
+    exclude: ["supplier contracts", "pricing"]
+    format: "ADR format with context, decision, consequences"
+    write: append
+  links:
+    - rel: parent
+      to: 01JWAGGLE010
+      label: "Decision Log"
+    - rel: parent
+      to: 01JWAGGLE002
+      label: "Architecture"
+    - rel: implements
+      to: 01JWAGGLE022
+      label: "Treat Dispenser Code"
+---
+
+# ADR-013: Treat Economy and Dispensing Rules
+
+**Status:** Accepted  
+**Date:** 2023-08-10  
+**Deciders:** Sarah Chen, Tom O'Brien, David Kim
+
+## Context
+
+Treats are essential to the Waggle experience:
+- Reward for using the collar correctly
+- Calm anxious passengers
+- Make rides positive experiences
+
+Early beta had unlimited treats. This went poorly.
+
+### The Buster Incident
+
+Golden Retriever "Buster" (CTO's dog, ironically) figured out how to game the treat dispenser:
+- Discovered sad whimpering triggered "comfort treats"
+- Combined with strategic pawing at dispenser
+- Consumed 47 treats in a 12-minute ride
+- Arrived at dog park too full to play
+
+We needed treat governance.
+
+## Options Considered
+
+### Option A: Unlimited Treats
+- **Pros:** Dogs love it
+- **Cons:** Health issues, gaming, driver refill costs
+
+### Option B: Fixed Treats Per Ride (Chosen)
+- **Pros:** Predictable, healthy, manageable
+- **Cons:** Some rides need more (vet, anxious dogs)
+
+### Option C: Human-Controlled Only
+- **Pros:** Total control
+- **Cons:** Defeats automation, humans aren't in the car
+
+### Option D: AI-Controlled Based on Behavior
+- **Pros:** Adaptive
+- **Cons:** Dogs will learn to game any system (they're smart)
+
+## Decision
+
+**Per-ride treat budget with category adjustments and driver discretion.**
+
+### Base Budget
+
+| Ride Type | Base Treats |
+|-----------|-------------|
+| Standard | 10 |
+| Long (>20 min) | 15 |
+| Vet visit | 20 |
+| First ride | 15 |
+| Anxious dog flag | +5 |
+
+### Dispensing Rules
+
+1. **Auto-dispense on pickup**: 2 treats (welcome aboard!)
+2. **Auto-dispense on arrival**: 2 treats (good destination!)
+3. **Driver discretion**: Remaining budget
+4. **Emergency treats**: Driver can exceed budget, flagged for review
+
+### Anti-Gaming Measures
+
+- Minimum 2 minutes between auto-dispenses
+- "Sad whimper" no longer triggers treats (sorry Buster)
+- Pawing at dispenser = no treats for 5 minutes
+- Treat velocity limit: max 3 per minute
+
+## Implementation
+
+The treat dispenser hardware:
+- 50-treat hopper capacity
+- Stepper motor for precise single-treat dispensing
+- IR sensor confirms treat actually dropped
+- WiFi connection to driver app
+- Tamper detection (dogs tried to break in)
+
+## Consequences
+
+### Positive
+- Average treats per ride: 7.2 (well under budget)
+- No more health incidents
+- Drivers appreciate predictable costs
+- Dogs still love rides
+
+### Negative
+- Some dogs initially disappointed (adjustment period)
+- Vet rides sometimes need budget override
+- Treat type preferences not yet supported (all dogs get same treats)
+
+### Future Enhancements
+
+- Treat preference profiles (bacon vs chicken vs dental)
+- Calorie tracking integration with pet health apps
+- Special occasion bonus treats (birthday rides?)
+
+## Metrics
+
+| Metric | Before | After |
+|--------|--------|-------|
+| Avg treats/ride | 23.4 | 7.2 |
+| Max treats/ride | 47 | 15 (20 for vet) |
+| Treat-related incidents | 12/month | 0 |
+| Dog satisfaction | 8.9/10 | 8.7/10 |

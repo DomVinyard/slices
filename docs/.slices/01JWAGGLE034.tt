@@ -1,0 +1,201 @@
+---
+tt:
+  v: "1"
+  id: 01JWAGGLE034
+  created_at: "2023-11-30T15:30:00Z"
+  title: "Session: Squirrel Incidents"
+  summary: "Agent handling mid-ride distractions and escape attempts"
+  kind: context
+  body:
+    type: conversation
+    conversation:
+      participants: ["agent", "david", "tom"]
+      agent_id: "waggle-dev-agent"
+      session_id: "sess_squirrel_001"
+      format: "markdown"
+      includes_tool_calls: true
+  contract:
+    purpose: "Design session for squirrel-related ride interruptions"
+    exclude: ["unrelated conversations"]
+    format: "Conversation with incident analysis and solutions"
+    write: append
+  links:
+    - rel: parent
+      to: 01JWAGGLE030
+      label: "Current Sprint"
+    - rel: references
+      to: 01JWAGGLE041
+      label: "Driver Training Guide"
+    - rel: references
+      to: 01JWAGGLE006
+      label: "Passenger Safety"
+---
+
+# Session: The Squirrel Problem
+
+## Context
+
+We've had 17 incidents in the past month of dogs reacting aggressively to squirrels seen through car windows. Two dogs attempted to exit moving vehicles. No injuries (yet), but this is a safety issue.
+
+---
+
+**David (Driver Ops):** We need to talk about squirrels.
+
+**Agent:** I saw the incident reports. Let me pull the data.
+
+[Tool: search incident reports for "squirrel"]
+
+```
+Incident Summary (Past 30 Days)
+-------------------------------
+Total squirrel-related incidents: 17
+- Excessive barking: 12
+- Attempted window exit: 3
+- Attempted door exit: 2
+- Successful escape: 0 (thankfully)
+
+Breeds most affected:
+- Terriers: 7 incidents
+- Hounds: 4 incidents
+- Retrievers: 3 incidents
+- Other: 3 incidents
+
+Times:
+- Morning (6-10am): 11 incidents
+- Afternoon (2-6pm): 6 incidents
+```
+
+**Tom:** The terrier numbers don't surprise me. They were literally bred to chase small animals.
+
+**David:** The two door exit attempts are what scare me. Drivers reported the dogs were pawing at door handles.
+
+**Agent:** Let me understand the current safeguards:
+
+1. Child locks engaged (prevents handle from working)
+2. Power windows locked by driver
+3. Driver training mentions "distraction management"
+
+But there's no proactive squirrel mitigation. Ideas:
+
+### Proposed: Squirrel Mode
+
+**1. Window Tinting / Shades**
+- Deployable window shades in back seats
+- Reduces external visibility during high-risk periods
+- Trade-off: Dogs might enjoy looking outside
+
+**2. Squirrel Detection**
+- Camera-based system to detect squirrels near route
+- Alert driver to engage calming measures
+- Ambitious, probably v2
+
+**3. Calming Response Protocol**
+
+When driver reports squirrel sighting:
+```
+1. Auto-dispense treat (distraction)
+2. Play calming music
+3. Driver verbal reassurance script
+4. Log incident for pattern learning
+```
+
+**4. High-Risk Route Avoidance**
+- Learn which routes have high squirrel density
+- Avoid during peak squirrel hours (morning)
+- Trade-off: Might add time to rides
+
+**David:** I like the calming protocol. Can we also add this to driver training?
+
+**Agent:** Yes. Update to driver training:
+
+### Driver Training: Squirrel Management
+
+```
+WHEN YOU SEE A SQUIRREL:
+
+1. Stay calm - your energy affects the dog
+2. Press "Squirrel Alert" button in app
+   - This triggers auto-treat and calming music
+3. Use calm voice: "It's okay, buddy. Good dog."
+4. If dog is highly agitated:
+   - Pull over safely
+   - Wait 2-3 minutes
+   - Dispense extra treats
+5. Do NOT:
+   - Point at squirrel
+   - Say "squirrel" (dogs know this word)
+   - Open windows
+```
+
+**Tom:** "Do not say squirrel" - that's important. Dogs definitely know that word.
+
+**Agent:** Should we add a bark-pattern detector for squirrel-excitement barks? The ML model could learn to distinguish "I want a ride" barks from "SQUIRREL" barks.
+
+**David:** That might be useful for automatic squirrel mode activation. If we detect squirrel bark, auto-engage calming protocol.
+
+**Agent:** Let me draft the incident response system:
+
+```typescript
+interface SquirrelIncident {
+  rideId: string;
+  timestamp: Date;
+  triggerSource: 'driver_report' | 'bark_detected' | 'camera';
+  
+  dogReaction: {
+    barkIntensity: number;     // 0-10
+    attemptedExit: boolean;
+    windowContact: boolean;    // Pawing at window
+  };
+  
+  response: {
+    treatsDispensed: number;
+    calmingMusicPlayed: boolean;
+    pulloverRequired: boolean;
+  };
+  
+  outcome: 'resolved' | 'ride_ended_early' | 'escalated';
+}
+
+async function handleSquirrelAlert(rideId: string, source: string) {
+  // 1. Dispense distraction treat
+  await dispenseTreat(rideId, 2, 'squirrel_distraction');
+  
+  // 2. Start calming music
+  await playMusic(rideId, 'calming_classical');
+  
+  // 3. Log for pattern learning
+  await logSquirrelIncident(rideId, source);
+  
+  // 4. If dog is high-risk (terrier, known squirrel issues)
+  const dog = await getDogFromRide(rideId);
+  if (dog.flags.includes('squirrel_reactive')) {
+    // Deploy window shades
+    await notifyDriver(rideId, 'deploy_window_shades');
+  }
+}
+```
+
+---
+
+## Decisions Made
+
+1. Add "Squirrel Alert" button to driver app
+2. Auto-dispense treats + calming music on squirrel alert
+3. Add squirrel management to driver training
+4. Track squirrel incidents for route learning
+5. Add "squirrel_reactive" flag to dog profiles
+
+## Follow-up Items
+
+- [ ] David: Update driver training materials
+- [ ] Tom: Add Squirrel Alert button to driver app
+- [ ] Lisa: Research squirrel-bark detection (v2)
+- [ ] Jake: Build squirrel incident logging
+
+## Post-Implementation Update
+
+After 3 weeks:
+- Squirrel incidents: 17 → 4 per month
+- Exit attempts: 0
+- Driver confidence: "Much better with the protocol"
+- One driver suggestion: "Add a squirrel emoji to the alert button"

@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Code block styling */
+pre {
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+code {
+  font-size: 0.875em;
+}
+
+/* Selection */
+::selection {
+  background-color: #dbeafe;
+}
+
+/* Callout boxes (Notion-style) */
+.callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.5rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #1e3a5f;
+  margin: 1rem 0;
+}
+
+.callout a {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.callout a:hover {
+  color: #1d4ed8;
+}
+
+.callout-icon {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+/* Viewer theme variables (used by demo) */
+.viewer-theme {
+  --tt-bg: #0d1117;
+  --tt-surface: #161b22;
+  --tt-border: #30363d;
+  --tt-text: #c9d1d9;
+  --tt-muted: #8b949e;
+  --tt-accent: #58a6ff;
+  --tt-success: #3fb950;
+  --tt-warning: #d29922;
+  --tt-danger: #f85149;
+  color-scheme: dark;
+}
+
+.viewer-theme ::selection {
+  background-color: var(--tt-accent);
+  color: white;
+}

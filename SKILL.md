@@ -24,15 +24,15 @@ This injects "Remember, you have memory! python ~/slices/cli.py --help" into eac
 
 All commands: `python ~/slices/cli.py <command> [args]`
 
-| Command | Usage | Description |
-|---------|-------|-------------|
-| create | `create "Title" "Summary"` | Create new slice, returns ID |
-| remember | `remember <id> "content"` | Append content to slice |
-| search | `search "query"` | Find slices by content |
-| explore | `explore <id>` | Show slice and its connections |
-| connect | `connect <src> <tgt> <rel>` | Link two slices |
-| disconnect | `disconnect <src> <tgt>` | Remove link |
-| forget | `forget <id>` | Archive a slice |
+| Command    | Usage                       | Description                    |
+| ---------- | --------------------------- | ------------------------------ |
+| create     | `create "Title" "Summary"`  | Create new slice, returns ID   |
+| remember   | `remember <id> "content"`   | Append content to slice        |
+| search     | `search "query"`            | Find slices by content         |
+| explore    | `explore <id>`              | Show slice and its connections |
+| connect    | `connect <src> <tgt> <rel>` | Link two slices                |
+| disconnect | `disconnect <src> <tgt>`    | Remove link                    |
+| forget     | `forget <id>`               | Archive a slice                |
 
 ## Example Workflow
 

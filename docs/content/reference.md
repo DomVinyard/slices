@@ -24,9 +24,7 @@ The shell scripts are the single source of truth. Everything else wraps them:
 Shell scripts (core/tools/definitions/)
     ↑
     ├── CLI (tt command)         — argument parsing + formatting
-    ├── MCP server               — exposes tools over MCP protocol
-    ├── TypeScript SDK            — wraps scripts from Node.js
-    └── Python SDK                — wraps scripts from Python
+    └── MCP server               — exposes tools over MCP protocol
 ```
 
 Because everything bottoms out at files and scripts, you can always fall back to `cat`, `grep`, or your own code. The tooling is a convenience layer, not a dependency.
@@ -376,51 +374,22 @@ For MCP-compatible agents (Claude Desktop, Cursor, etc.):
 npx @treetext/mcp
 ```
 
-This exposes `remember`, `search`, `explore`, `connect`, `disconnect`, and `info` as MCP tools. The agent calls them like any other tool—no SDK or custom code needed.
+This exposes `remember`, `search`, `explore`, `connect`, `disconnect`, and `info` as MCP tools. The agent calls them like any other tool—no custom code needed.
 
 Configure via environment variables:
 
 - `TT_DIR` — Memory directory (default: `.slices`)
 - `TT_CWD` — Working directory (default: `process.cwd()`)
 
-### SDKs
-
-TypeScript and Python SDKs wrap the same shell scripts for programmatic access. They're convenience wrappers—not required.
-
-```typescript
-import { Memory } from "@treetext/sdk";
-const mem = new Memory(".slices");
-
-const id = await mem.create({ title: "API Notes", summary: "API design decisions" });
-await mem.remember(id, "The API uses GraphQL");
-const results = await mem.search("API");
-```
-
-```python
-from treetext import Memory
-mem = Memory(".slices")
-
-file = mem.create("API Notes", "API design decisions")
-mem.remember(file.id, content="The API uses GraphQL")
-results = mem.search("API")
-```
-
-Install:
-
-```bash
-npm install @treetext/sdk    # TypeScript
-pip install treetext          # Python
-```
-
 ---
 
 ## Environment Variables
 
-| Variable            | Description                  | Default     |
-| ------------------- | ---------------------------- | ----------- |
+| Variable            | Description                  | Default   |
+| ------------------- | ---------------------------- | --------- |
 | `TT_DIR`            | Memory directory             | `.slices` |
-| `ANTHROPIC_API_KEY` | For summary regeneration     | -           |
-| `OPENAI_API_KEY`    | Alternative for regeneration | -           |
+| `ANTHROPIC_API_KEY` | For summary regeneration     | -         |
+| `OPENAI_API_KEY`    | Alternative for regeneration | -         |
 
 ## Exit Codes
 

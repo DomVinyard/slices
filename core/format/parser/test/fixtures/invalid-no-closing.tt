@@ -1,0 +1,8 @@
+---
+tt:
+  v: "1"
+  id: 01JTEST000000000000000006
+  title: Missing Closing
+  summary: No closing delimiter
+
+This file is missing the closing --- delimiter.

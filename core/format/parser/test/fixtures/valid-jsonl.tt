@@ -1,0 +1,15 @@
+---
+tt:
+  v: "1"
+  id: 01JTEST0000000000000000003
+  title: JSONL File
+  summary: A file with JSONL body
+  body:
+    type: jsonl
+  contract:
+    purpose: Store events
+    write: supersede
+---
+{"_meta": {"id": "01JROW00000000000000000001", "created_at": "2026-01-01T00:00:00Z"}, "event": "created", "data": {"name": "test"}}
+{"_meta": {"id": "01JROW00000000000000000002", "created_at": "2026-01-02T00:00:00Z"}, "event": "updated", "data": {"name": "test2"}}
+{"_meta": {"id": "01JROW00000000000000000003", "created_at": "2026-01-03T00:00:00Z"}, "event": "deleted", "data": {"id": 123}}

@@ -89,7 +89,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <Shelf
           files={files}
           title="All Files"
-          emptyMessage="No TreeText files found."
+          emptyMessage="No Slices files found."
         />
       )}
     </div>

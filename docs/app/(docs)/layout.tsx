@@ -8,11 +8,11 @@ export default function DocsLayout({
   return (
     <>
       <header className="border-b border-zinc-200">
-        <div className="max-w-5xl mx-auto px-6 py-6">
+        <div className="max-w-4xl mx-auto px-6 py-6">
           <Nav />
         </div>
       </header>
-      <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">{children}</main>
+      <main className="max-w-4xl mx-auto px-6 py-12 md:py-16">{children}</main>
     </>
   );
 }

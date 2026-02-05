@@ -1,0 +1,14 @@
+---
+tt:
+  v: "1"
+  id: 01JTEST0000000000000000004
+  title: "Bad Contract Enums"
+  summary: "This file has invalid contract enum values."
+  body:
+    type: markdown
+  contract:
+    write: invalid_mode
+    overflow: unknown_strategy
+---
+
+Content.

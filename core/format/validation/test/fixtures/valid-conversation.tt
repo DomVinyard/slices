@@ -1,0 +1,30 @@
+---
+tt:
+  v: "1"
+  id: 01JTEST0000000000000000005
+  title: "Debug Session - Memory Leak"
+  summary: "Agent conversation debugging the auth memory leak"
+  kind: context
+  body:
+    type: conversation
+    conversation:
+      participants:
+        - user
+        - assistant
+        - tool_call
+        - tool_result
+      agent_id: claude-3-opus
+      session_id: sess_abc123
+      trace_id: "4bf92f3577b34da6a3ce929d0e0e4736"
+      span_id: "00f067aa0ba902b7"
+      format: messages
+      includes_tool_calls: true
+  meta:
+    resolved: true
+    duration_minutes: 45
+---
+{"role": "user", "content": "I'm seeing memory usage grow over time", "ts": "2026-02-03T10:00:00Z"}
+{"role": "assistant", "content": "Let me check the auth service...", "ts": "2026-02-03T10:00:05Z"}
+{"role": "tool_call", "name": "read_file", "args": {"path": "auth/service.ts"}, "call_id": "call_001", "ts": "2026-02-03T10:00:06Z"}
+{"role": "tool_result", "call_id": "call_001", "content": "export class AuthService...", "ts": "2026-02-03T10:00:07Z"}
+{"role": "assistant", "content": "I found the issue - there's a listener leak on line 45", "ts": "2026-02-03T10:00:12Z"}

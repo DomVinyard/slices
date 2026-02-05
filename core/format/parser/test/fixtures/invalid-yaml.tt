@@ -1,0 +1,13 @@
+---
+tt:
+  v: "1"
+  id: 01JTEST000000000000000007
+  title: Bad YAML
+  summary: This has invalid YAML
+  links:
+    - rel: depends_on
+      to: missing-colon
+    - this is not valid yaml: [unclosed bracket
+---
+
+Body content.

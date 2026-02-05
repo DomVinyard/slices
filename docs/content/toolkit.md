@@ -8,7 +8,7 @@ Slices ships everything you need to work with `.slice` files — from low-level 
 
 Reads `.slice` files and extracts the YAML frontmatter and body content. Handles all 8 body types (`markdown`, `jsonl`, `text`, `code`, `conversation`, `yaml`, `routine`, `none`) and validates the `slice:` namespace structure.
 
-The parser is the foundation that everything else builds on. It's used internally by the tools, CLI, SDKs, and viewer.
+The parser is the foundation that everything else builds on. It's used internally by the tools, CLI, and viewer.
 
 ---
 
@@ -49,7 +49,7 @@ The core of the toolkit. Each tool is a standalone, deterministic shell script:
 | `forget`     | Archive or permanently delete              |
 | `info`       | Stats, metadata, and graph export          |
 
-The shell scripts are the single source of truth. Everything else — the CLI, MCP server, and SDKs — wraps them. Because `.slice` files are just text and the tools are just scripts, you can also work with slices using `cat`, `grep`, your editor, or your own code. The toolkit is a convenience, not a requirement.
+The shell scripts are the single source of truth. Everything else — the CLI and MCP server — wraps them. Because `.slice` files are just text and the tools are just scripts, you can also work with slices using `cat`, `grep`, your editor, or your own code. The toolkit is a convenience, not a requirement.
 
 Each tool has a JSON schema (`<tool>.json`) that defines its input contract, used by MCP servers and agents for structured tool calling.
 
@@ -90,54 +90,12 @@ Exposes the tools over the [Model Context Protocol](https://modelcontextprotocol
 npx @treetext/mcp
 ```
 
-The server exposes `create`, `remember`, `search`, `explore`, `connect`, `disconnect`, `forget`, and `info` as MCP tools. Agents call them like any other tool — no SDK or custom integration needed.
+The server exposes `create`, `remember`, `search`, `explore`, `connect`, `disconnect`, `forget`, and `info` as MCP tools. Agents call them like any other tool — no custom integration needed.
 
 Configure via environment variables:
 
 - `TT_DIR` — Memory directory (default: `.slices`)
 - `TT_CWD` — Working directory (default: `process.cwd()`)
-
----
-
-## TypeScript SDK
-
-Programmatic access from Node.js. A convenience wrapper around the shell scripts.
-
-```bash
-npm install @treetext/sdk
-```
-
-```typescript
-import { Memory } from "@treetext/sdk";
-
-const mem = new Memory(".slices");
-const id = await mem.create({ title: "API Notes", summary: "API design decisions" });
-await mem.remember(id, "The API uses GraphQL");
-const results = await mem.search("authentication");
-await mem.connect(id, otherId, "depends_on");
-const graph = await mem.explore(id);
-```
-
----
-
-## Python SDK
-
-Programmatic access from Python. Same operations, same underlying scripts.
-
-```bash
-pip install treetext
-```
-
-```python
-from treetext import Memory
-
-mem = Memory(".slices")
-file = mem.create("API Notes", "API design decisions")
-mem.remember(file.id, content="The API uses GraphQL")
-results = mem.search("authentication")
-mem.connect("01JAUTH", "01JSECURITY", "evidence_for")
-neighbors = mem.explore("01JAUTH")
-```
 
 ---
 

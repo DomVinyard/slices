@@ -1,0 +1,33 @@
+---
+tt:
+  v: "1"
+  id: 01JTEST0000000000000000002
+  title: Full Featured File
+  summary: A complete Slices file with all fields
+  kind: context
+  body:
+    type: markdown
+  contract:
+    purpose: Store technical decisions
+    write: append
+    overflow: archive
+    see:
+      - what: authentication
+        at: 01JAUTHF000000000000000001
+  links:
+    - rel: depends_on
+      to: 01JTEST0000000000000000001
+      label: Builds on minimal example
+    - rel: see_also
+      to: 01JABCDE000000000000000001
+  created_at: "2026-01-01T00:00:00Z"
+  updated_at: "2026-02-01T00:00:00Z"
+---
+
+## Introduction
+
+This file demonstrates all Slices features.
+
+## Details
+
+More content here with reference to 01JTEST0000000000000000001.

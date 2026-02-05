@@ -1,0 +1,7 @@
+tt:
+  v: "1"
+  id: 01JTEST000000000000000005
+  title: Missing Delimiter
+  summary: No opening delimiter
+
+This file is missing the opening --- delimiter.

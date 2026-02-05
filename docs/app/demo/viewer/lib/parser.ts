@@ -1,9 +1,9 @@
 /**
  * Parser adapter for reference viewer.
- * Re-exports from @treetext/parser with viewer-compatible interface.
+ * Re-exports from @slices/parser with viewer-compatible interface.
  */
 
-import { parseFileStrict } from './treetext-parser';
+import { parseFileStrict } from './slices-parser';
 import type { TTFile, TTFrontmatter, TTLink, TTContract } from './models';
 
 /**

@@ -1,0 +1,32 @@
+---
+tt:
+  v: "1"
+  id: 01JTEST0000000000000000001
+  title: "Full Featured File"
+  summary: "A .tt file demonstrating all features."
+  kind: context
+  body:
+    type: markdown
+  contract:
+    purpose: "Store architecture decisions with rationale."
+    write: append
+    overflow: split
+    see:
+      - what: "Implementation details"
+        at: ./implementation.tt
+      - what: "Meeting notes"
+        at: 01JTEST0000000000000000002
+  links:
+    - rel: depends_on
+      to: 01JTEST0000000000000000000
+    - rel: see_also
+      to: ./valid-minimal.tt
+---
+
+## Architecture Decision
+
+We decided to use TypeScript for type safety.
+
+## Rationale
+
+Strong typing helps catch errors at compile time.

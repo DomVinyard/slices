@@ -1,0 +1,11 @@
+---
+tt:
+  v: "1"
+  id: 01JTEST0000000000000000001
+  title: Minimal Valid File
+  summary: A minimal valid Slices file
+  body:
+    type: markdown
+---
+
+This is the body content.

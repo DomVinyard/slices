@@ -1,0 +1,22 @@
+---
+tt:
+  v: "1"
+  id: 01JTEST0000000000000000004
+  title: "Authentication Service"
+  summary: "JWT-based authentication implementation"
+  kind: context
+  body:
+    type: code
+    code:
+      lang: typescript
+      extension: ts
+  meta:
+    module: auth
+    tested: true
+---
+export class AuthService {
+  verify(token: string): boolean {
+    // JWT verification logic
+    return true;
+  }
+}

@@ -1,5 +1,5 @@
 /**
- * TreeText file model types
+ * Slices file model types
  */
 
 export interface TTLink {

@@ -1,5 +1,5 @@
 /**
- * Load TreeText files from the filesystem
+ * Load Slices files from the filesystem
  */
 
 import { promises as fs } from 'fs';
@@ -7,18 +7,18 @@ import path from 'path';
 import type { TTFile } from './models';
 import { parseTTFile } from './parser';
 
-// Default TreeText directory - relative to docs root
-const DEFAULT_TT_DIR = process.env.TT_DIR || path.resolve(process.cwd(), 'docs/.treetext');
+// Default Slices directory - relative to docs root
+const DEFAULT_TT_DIR = process.env.SLICES_DIR || path.resolve(process.cwd(), 'docs/.slices');
 
 /**
- * Get the TreeText directory path
+ * Get the Slices directory path
  */
 export function getTTDir(): string {
   // In development, cwd is repo root; in production (Vercel), check both locations
   const candidates = [
-    process.env.TT_DIR,
-    path.resolve(process.cwd(), '.treetext'),
-    path.resolve(process.cwd(), 'docs/.treetext'),
+    process.env.SLICES_DIR,
+    path.resolve(process.cwd(), '.slices'),
+    path.resolve(process.cwd(), 'docs/.slices'),
   ].filter(Boolean) as string[];
   
   for (const dir of candidates) {
@@ -28,7 +28,7 @@ export function getTTDir(): string {
     } catch {}
   }
   
-  return candidates[0] || '.treetext';
+  return candidates[0] || '.slices';
 }
 
 /**

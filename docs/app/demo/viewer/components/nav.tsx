@@ -25,7 +25,7 @@ export function Nav() {
           >
             <span className="text-2xl">🌳</span>
             <span className="font-semibold text-tt-text hidden sm:block">
-              TreeText Viewer
+              Slices Viewer
             </span>
           </Link>
 

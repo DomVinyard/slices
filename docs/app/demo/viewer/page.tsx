@@ -50,7 +50,7 @@ export default async function HomePage() {
       <Shelf
         files={sortedFiles}
         title={`All Files (${files.length})`}
-        emptyMessage="No TreeText files found. Create a .treetext directory with .tt files to get started."
+        emptyMessage="No Slices files found. Create a .slices directory with .tt files to get started."
       />
     </div>
   );

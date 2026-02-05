@@ -1,8 +1,8 @@
 import { Nav } from './components/nav';
 
 export const metadata = {
-  title: 'TreeText Viewer Demo',
-  description: 'Interactive demo of the TreeText memory viewer',
+  title: 'Slices Viewer Demo',
+  description: 'Interactive demo of the Slices memory viewer',
 };
 
 export default function ViewerLayout({ children }: { children: React.ReactNode }) {

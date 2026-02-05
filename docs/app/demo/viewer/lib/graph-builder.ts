@@ -1,5 +1,5 @@
 /**
- * Build a graph from TreeText files
+ * Build a graph from Slices files
  */
 
 import type { TTFile, Graph, GraphNode, GraphEdge } from './models';

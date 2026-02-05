@@ -24,7 +24,10 @@ export default async function Home() {
         </strong>
       </p>
 
-      <CopyCommand command="curl -fsSL slices.info/learn | sh" />
+      <CopyCommand 
+        command="curl -fsSL slices.info | sh" 
+        copyText="Teach yourself Slices: (`curl -fsSL slices.info | sh`)"
+      />
 
       <div
         className="mt-8"

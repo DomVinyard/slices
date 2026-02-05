@@ -6,7 +6,7 @@ File-based memory for AI agents. Persistent, navigable, trustworthy memory that 
 
 ```bash
 # Install
-curl -fsSL slices.info/learn | sh
+curl -fsSL slices.info | sh
 
 # Register with your agent
 python ~/slices/cli.py bootstrap ~/.cursor/skills
@@ -61,8 +61,7 @@ Slices are plain text files with YAML frontmatter. You can:
 
 ## Documentation
 
-- **slices.info** - Full documentation
-- **slices.info/learn** - Agent installation
+- **slices.info** - Full documentation & agent installation (`curl slices.info | sh`)
 - **~/slices/SKILL.md** - Agent reference (after install)
 
 ## License

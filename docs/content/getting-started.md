@@ -3,7 +3,7 @@
 Paste this command into your agent:
 
 ```bash
-curl -fsSL slices.info/learn | sh
+curl -fsSL slices.info | sh
 ```
 
 This installs Slices to `~/slices` and shows you how to register it with your agent.

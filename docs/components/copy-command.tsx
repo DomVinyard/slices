@@ -4,21 +4,22 @@ import { useState } from "react";
 
 interface CopyCommandProps {
   command: string;
+  copyText?: string;
   className?: string;
 }
 
-export function CopyCommand({ command, className = "" }: CopyCommandProps) {
+export function CopyCommand({ command, copyText, className = "" }: CopyCommandProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(command);
+    await navigator.clipboard.writeText(copyText || command);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <div
-      className={`group relative flex items-center gap-3 bg-zinc-900 text-zinc-100 rounded-lg px-4 py-3 font-mono text-sm cursor-pointer hover:bg-zinc-800 transition-colors ${className}`}
+      className={`group relative bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 rounded-2xl p-6 cursor-pointer hover:border-amber-300 hover:shadow-lg hover:shadow-amber-100/50 transition-all duration-200 ${className}`}
       onClick={handleCopy}
       role="button"
       tabIndex={0}
@@ -28,17 +29,21 @@ export function CopyCommand({ command, className = "" }: CopyCommandProps) {
         }
       }}
     >
-      <span className="text-zinc-500 select-none">$</span>
-      <code className="flex-1 overflow-x-auto">{command}</code>
-      <span
-        className={`text-xs transition-opacity ${
-          copied
-            ? "text-green-400"
-            : "text-zinc-500 opacity-0 group-hover:opacity-100"
-        }`}
-      >
-        {copied ? "Copied!" : "Click to copy"}
-      </span>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-amber-400 select-none text-lg">$</span>
+          <code className="font-mono text-zinc-700 text-base overflow-x-auto">{command}</code>
+        </div>
+        <span
+          className={`text-sm font-medium whitespace-nowrap transition-all ${
+            copied
+              ? "text-green-600"
+              : "text-amber-600/70 group-hover:text-amber-600"
+          }`}
+        >
+          {copied ? "Copied!" : "Click to copy"}
+        </span>
+      </div>
     </div>
   );
 }

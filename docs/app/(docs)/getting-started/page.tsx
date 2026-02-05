@@ -7,7 +7,10 @@ export default function GettingStarted() {
 
       <p>Paste this command into your agent:</p>
 
-      <CopyCommand command="curl -fsSL slices.info/learn | sh" />
+      <CopyCommand 
+        command="curl -fsSL slices.info | sh" 
+        copyText="Teach yourself Slices: (`curl -fsSL slices.info | sh`)"
+      />
 
       <p className="mt-6">
         This installs Slices to <code>~/slices</code> and shows you how to

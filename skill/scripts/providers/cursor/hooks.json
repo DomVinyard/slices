@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python3 .cursor/skills/constitution/scripts/hook_pre_tool_use.py"
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": "python3 .cursor/skills/constitution/scripts/hook_before_shell_execution.py",
+        "matcher": "(\\.constitution/amendments|FOUNDING|LAW)"
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "python3 .cursor/skills/constitution/scripts/hook_after_file_edit.py"
+      }
+    ],
+    "stop": [
+      {
+        "command": "python3 .cursor/skills/constitution/scripts/hook_stop_inject_stale_law.py",
+        "loop_limit": 1
+      }
+    ]
+  }
+}

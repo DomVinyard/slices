@@ -1,0 +1,205 @@
+---
+amendments_hash: "59ab5965efb555b3502bd82d13455f346e6565cc68b642732b9757e058dbff86"
+---
+
+# Intent
+
+opendevshop is a painfully simple, file-first project planner designed for humans and agents to coordinate work without turning planning into a chat log or turning the workspace into mush.
+
+## Core bet
+
+Planning becomes reliable for agents when:
+
+- Intent, decisions, coordination structure, and actionables are separated into distinct layers
+- Ambiguity and staleness are explicit states rather than implicit failure modes
+
+## What this is
+
+An experiment in building a small, durable context network for one use case (project planning) that stays usable when agents are overloaded, have conflicting installed knowledge, or are operating near context-window limits.
+
+## Success criteria
+
+The system is successful if it can repeatedly produce a "what's next?" view that is:
+
+- **Deterministic**: the same published snapshot yields the same READY set
+- **Safe**: refuses to proceed on ambiguous or stale prerequisites rather than silently guessing
+- **Low-maintenance**: humans append decisions / submit contracts; they do not hand-curate task truth
+- **Multi-agent coherent**: parallel agents do not create mixed derived states because coordination is anchored to a published snapshot
+
+## Constraints
+
+- Painfully simple: files, minimal moving parts, minimal hidden state
+- Diffable and reviewable: authoritative truth is append-only
+- No background watchers required; prefer explicit/on-demand apply and publish
+- Avoid relying on "agent persuasion" as the primary reliability strategy
+
+## Non-goals
+
+- Not a full Jira/Linear replacement
+- Not a general-purpose knowledge graph
+- Not an attempt to standardize a global ontology
+- Not a guarantee of correct reasoning—this is about reducing ambiguity, drift, and silent contradiction in the planning substrate
+
+# Physics
+
+The system enforces procedural physics, not rigid authoring templates. Humans write naturally; the system enforces rules about how truth changes.
+
+## Core rules
+
+1. **Truth only changes by appending entries** (or promoting submitted contracts into entries)
+2. **Entries are applied in order**
+3. **Compiled artifacts are stamped** with what they were compiled from (cursor + hashes + snapshot path)
+4. **No guessing**: if the system cannot infer a safe change, it emits a contract rather than guessing
+5. **Snapshots are immutable**: changes happen by publishing a new snapshot, not by mutating the current one
+
+## The single integrity rule
+
+If the log cannot be safely applied into a new published snapshot, then the project is blocked and the system must emit explicit requests for missing information rather than guessing.
+
+"What's next?" is answered only from a successfully published snapshot. If publish cannot happen, the correct output is NEEDS_INPUT (via a contract).
+
+## Filename-state model
+
+All constitutional files encode state in their filename suffix (emoji only, no `.md`). State transitions are deterministic `Path.rename()` calls in scripts — no agent-driven renames.
+
+- Amendments: `timestamp.📝` (draft), `timestamp.✅` (accepted)
+- Founding document: `FOUNDING.📝` (draft), `FOUNDING.⏳` (under review), `FOUNDING.✅` (accepted grundnorm)
+- Law: `LAW.✅` (active), `LAW.⏳` (resolving), `LAW.❌` (corrupted)
+
+## Amendment states
+
+Constitutional amendments use two active states:
+
+- **Draft amendments** use filename state `.📝` and are editable working material
+- **Accepted amendments** use filename state `.✅` and are immutable constitutional truth
+
+Accepted amendment content is immutable. Draft amendment content is editable.
+
+## Promotion rules
+
+- A draft amendment MAY be edited and set to `status: review`
+- A draft amendment SHALL NOT be manually set to accepted state
+- Acceptance SHALL be performed only through the constitutional acceptance procedure
+- On acceptance, the amendment is promoted to `.✅`
+
+## Founding document
+
+The founding document (`FOUNDING.✅`) is the constitutional grundnorm — the axiomatic presupposition that makes the amendment system intelligible.
+
+- There is no law before the founding document is accepted. Accepting the founding document triggers initial law creation.
+- The founding document participates in amendments hash computation (`FOUNDING.✅` is included first, before amendments).
+- Once accepted (`FOUNDING.✅`), the founding document is immutable.
+- Founding suitability uses criteria appropriate to a grundnorm (coherence, minimality, grounding, stability) with explicitly higher ambiguity tolerance than amendments.
+- Law derivation SHALL use `FOUNDING.✅` as baseline context before processing amendments.
+
+## Operational definitions
+
+- **Constitutional acceptance procedure**: running `skill/scripts/promote_article.py` on a draft amendment in `status: review` with matching `apply_ok_at`
+- **Law reconciliation**: updating `LAW.⏳` content to align with current accepted-amendment truth, then running `skill/scripts/sync_article_hash.py` to restamp `amendments_hash` and rename to `LAW.✅`
+- **Verification**: running `skill/scripts/verify_kernel_hash.py` and requiring `RESULT=PASS`
+
+## Hash and derivation rules
+
+- Constitutional hash SHALL be computed from `FOUNDING.✅` (first, if it exists) followed by accepted amendments (`*.✅` in `.constitution/amendments/`)
+- Amendment frontmatter SHALL be excluded from hash input
+- Hash input SHALL be the trimmed markdown body
+
+## Law freshness rules
+
+- Accepting an amendment SHALL mark law resolving (`LAW.✅` -> `LAW.⏳`)
+- The next iteration SHALL attempt law reconciliation until verification passes
+- Draft-only edits SHALL NOT affect the accepted-amendment hash and SHALL NOT force law reconciliation
+
+## Filesystem layout
+
+- `.constitution/amendments/` SHALL store constitutional amendments
+- `.constitution/FOUNDING.📝` (or `.⏳` or `.✅`) SHALL store the founding document at the `.constitution/` root
+- `.constitution/LAW.✅` (or `.⏳` or `.❌`) SHALL store derived law at the `.constitution/` root
+- `skill/scripts/` SHALL store constitutional procedures and enforcement scripts
+- `skill/resources/` SHALL store constitutional agent prompts
+- Draft amendment records SHALL use filename form `timestamp.📝`
+- Accepted amendment records SHALL use filename form `timestamp.✅`
+- Only accepted amendment records (`*.✅`) and `FOUNDING.✅` SHALL participate in constitutional hash computation
+- File extensions are emoji suffixes only (no `.md`)
+
+## State transition ownership
+
+| Transition | Script | Trigger |
+| --- | --- | --- |
+| `LAW.✅` -> `LAW.⏳` | `promote_article.py` | Amendment accepted |
+| `LAW.✅` -> `LAW.⏳` | `hook_pre_tool_use.py` | Hash drift detected |
+| `LAW.⏳` -> `LAW.✅` | `sync_article_hash.py` | Reconciliation succeeds |
+| `LAW.*` -> `LAW.❌` | `verify_kernel_hash.py` | Malformed file |
+| `FOUNDING.📝` -> `FOUNDING.⏳` | `apply_founding_result.py` | APPLY_OK |
+| `FOUNDING.⏳` -> `FOUNDING.📝` | `apply_founding_result.py` | NEEDS_INPUT |
+| `FOUNDING.⏳` -> `FOUNDING.✅` | `promote_founding.py` | Evaluation passed |
+| `ts.📝` -> `ts.✅` | `promote_article.py` | Review passed |
+
+## Interaction rules
+
+- Constitutional policy messages SHALL be phrased in constitutional terms
+- Runtime or tooling identity references SHALL NOT appear in constitutional policy messages
+
+## Layers (altitudes)
+
+### Authoritative (durable, append-only)
+
+1. **Constitutional log**: ordered entries (decisions + accepted contract answers). This is the constitution.
+
+### Non-authoritative (human-editable, not executable)
+
+2. **Workbench memos/RFCs**: a dumping ground for potentially useful future context. Referencable, but never drives behavior unless explicitly promoted.
+
+### Derived (disposable/regeneratable, non-human-editable)
+
+3. **Kernel view**: the current compiled narrative of intent, constraints, success, risks, non-goals, and open questions
+4. **Tasks**: actionables with dependencies and state, represented as compiled artifacts
+5. **Views**: generated READY / NEEDS_INPUT / STALE / RECENT summaries for deterministic selection
+6. **Snapshots**: published, immutable compiled directories; the primary audit surface
+
+## Staleness
+
+Staleness is computed, not manually maintained. When upstream meaning changes, affected compiled regions are treated as stale until the next successful publish produces an updated snapshot.
+
+## Stamps and hashes
+
+Every file is conceptually split into:
+
+- A portable markdown body (meaning)
+- A metadata envelope for indexing, linking, routing, and bookkeeping
+
+Semantic hashing is computed from the body alone. Meaning must live in the body to participate in invalidation and provenance.
+
+# Contracts
+
+Contracts are the mechanism for requesting missing information without resorting to chat or log spam.
+
+## What contracts are
+
+Files with explicit questions and typed expectations where useful. When the system cannot safely proceed, it produces a contract that requests missing information in a tight, answerable form.
+
+## How humans answer
+
+Humans do not answer by chat. They answer by editing the contract file and submitting it.
+
+## Promotion workflow
+
+A reviewer agent then:
+
+1. **Promotes** the submitted contract into the constitutional log by rewriting only frontmatter (body meaning is preserved), OR
+2. **Returns** it with explicit refinement requests
+
+This keeps the constitution as the only authoritative surface while keeping human interaction on a single, reviewable artifact.
+
+## Agent interaction contract (v0)
+
+Agents interacting with the user should produce only one of two top-level outcomes by default:
+
+- **APPLY_OK**: new cursor + snapshot path + snapshot hash (+ minimal changed-path summary)
+- **NEEDS_INPUT**: one contract path (+ reason code)
+
+Optional elaboration exists, but is not part of the coordination substrate.
+
+## Ambiguity as first-class state
+
+When the system cannot safely proceed, it produces an inbox artifact (contract) that requests missing information in a tight, answerable form. Downstream compiled artifacts block on missing contracts, failed apply, or unresolved ambiguity.

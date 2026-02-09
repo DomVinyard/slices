@@ -1,0 +1,55 @@
+---
+apply_ok_at: "43ea1d22b2414cd648643c340c4097d73a476b63fb610f199b31a06b06028a64"
+---
+
+This amendment records structural changes to the constitutional filesystem layout and introduces the founding document and filename-state model. It supersedes the filesystem layout rules in amendment 20260209105816.
+
+All constitutional files encode state in their filename suffix (emoji only, no `.md` extension). State transitions are deterministic renames performed by scripts, not agents.
+
+Filename-state model:
+
+- Amendments: `timestamp.📝` (draft), `timestamp.✅` (accepted)
+- Founding document: `FOUNDING.📝` (draft), `FOUNDING.⏳` (under review), `FOUNDING.✅` (accepted as grundnorm)
+- Law: `LAW.✅` (active), `LAW.⏳` (resolving), `LAW.❌` (corrupted)
+
+Filesystem layout (supersedes prior layout rules):
+
+- `.constitution/amendments/` SHALL store constitutional amendments (renamed from `.articles/`).
+- `.constitution/FOUNDING.📝` (or `.⏳` or `.✅`) SHALL store the founding document at the `.constitution/` root.
+- `.constitution/LAW.✅` (or `.⏳` or `.❌`) SHALL store derived law at the `.constitution/` root.
+- `skill/scripts/` SHALL store constitutional procedures and enforcement scripts.
+- `skill/resources/` SHALL store constitutional agent prompts.
+- Draft amendment records SHALL use filename form `timestamp.📝`.
+- Accepted amendment records SHALL use filename form `timestamp.✅`.
+- File extensions are emoji suffixes only (no `.md`).
+
+The founding document is the constitutional grundnorm:
+
+- The founding document is the axiomatic presupposition that makes the amendment system intelligible.
+- There is no law before the founding document is accepted. Accepting the founding document triggers initial law creation.
+- The founding document participates in amendments hash computation. `FOUNDING.✅` is included first (before amendments) in the hash.
+- Once accepted (`FOUNDING.✅`), the founding document is immutable.
+- Founding suitability evaluation uses criteria appropriate to a grundnorm (coherence, minimality, grounding, stability). Ambiguity tolerance is explicitly higher than for amendments.
+- Law derivation agents SHALL read `FOUNDING.✅` as baseline context before processing amendments.
+
+State transition ownership (all deterministic script renames):
+
+- `LAW.✅` to `LAW.⏳`: `promote_article.py` (amendment accepted) or `hook_pre_tool_use.py` (hash drift)
+- `LAW.⏳` to `LAW.✅`: `sync_article_hash.py` (reconciliation succeeds)
+- `LAW.*` to `LAW.❌`: `verify_kernel_hash.py` (malformed file)
+- `FOUNDING.📝` to `FOUNDING.⏳`: `apply_founding_result.py` (APPLY_OK)
+- `FOUNDING.⏳` to `FOUNDING.📝`: `apply_founding_result.py` (NEEDS_INPUT)
+- `FOUNDING.⏳` to `FOUNDING.✅`: `promote_founding.py` (evaluation passed)
+- `timestamp.📝` to `timestamp.✅`: `promote_article.py` (review passed)
+
+Hash computation:
+
+- Constitutional hash SHALL be computed from `FOUNDING.✅` (first, if it exists) followed by accepted amendments (`*.✅` in `.constitution/amendments/`).
+- Amendment frontmatter SHALL be excluded from hash input.
+- Hash input SHALL be the trimmed markdown body.
+
+Operational definitions (updated):
+
+- Constitutional acceptance procedure means running `skill/scripts/promote_article.py` on a draft amendment in `status: review` with matching `apply_ok_at`.
+- Law reconciliation means updating `LAW.⏳` content, then running `skill/scripts/sync_article_hash.py` to restamp and rename to `LAW.✅`.
+- Verification means running `skill/scripts/verify_kernel_hash.py` and requiring `RESULT=PASS`.

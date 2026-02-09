@@ -1,0 +1,1 @@
+../../skill/commands/constitution-reconcile-law.md

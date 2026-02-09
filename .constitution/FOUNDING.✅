@@ -1,0 +1,14 @@
+---
+---
+
+This system presupposes that planning becomes reliable when truth is separated from interpretation.
+
+The constitutional log is the sole authoritative record. Every commitment, decision, and answered question enters the system by being appended to this log. Nothing else is truth. Everything else — compiled views, tasks, summaries, selections — is derived from the log and disposable.
+
+This separation exists because agents and humans operating under context pressure will, without it, conflate working notes with commitments, reinterpret prior decisions to fit current context, and silently lose information. The log prevents this by making truth append-only and explicit: what has been committed cannot be uncommitted, only superseded by a later commitment.
+
+When the system cannot safely proceed — when it lacks information needed to derive the next state — it must say so explicitly rather than guess. Ambiguity is a first-class state, not a failure to be papered over. The system emits a request for the missing information in a form that can be answered in one pass.
+
+The founding presupposition, then, is this: a planning system is trustworthy to the extent that it maintains a clear boundary between what has been decided and what has been derived, and refuses to cross that boundary silently.
+
+Everything that follows — the article format, the law derivation, the contract workflow, the snapshot model — is an attempt to make this presupposition operational. Those details belong in articles. This document exists only to state what must be true for those articles to matter.

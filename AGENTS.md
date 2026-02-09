@@ -1,0 +1,38 @@
+# AGENTS.md
+
+This project builds **opendevshop**, a constitutional planning system and tooling for human-agent coordination.
+
+## The meta situation
+
+This project uses the same system it's building to plan and coordinate its own development. That means:
+
+1. **The product**: A file-first planning system where truth lives in an append-only constitution, everything else is derived, and agents coordinate via published snapshots.
+
+2. **The process**: We use that same system (bootstrap version, then progressively the real thing) to plan and build it.
+
+These are distinct:
+
+- When you're **working on the system**, you're modifying code, specs, and tooling that implement the constitutional planning model.
+- When you're **working within the system**, you're appending entries to `.constitution/`, answering contracts, or reading compiled views to decide what to do next.
+
+## Runtime environment
+
+We are using **Cursor IDE/Agent** as the execution and runtime environment. All system functionality must currently be usable within Cursor.
+
+This will change later—the goal is a runtime-agnostic system—but for now Cursor is the substrate. Agents operating here should be familiar with Cursor's capabilities and constraints.
+
+Cursor docs: https://docs.cursor.com
+
+## Current state
+
+The `.constitution/` directory contains the authoritative log. The `.constitution/.articles/` directory holds the constitutional entries in append-only order (timestamped filenames).
+
+Right now this is bootstrap: the tooling doesn't exist yet, so "compilation" and "publishing snapshots" are manual or don't happen. As we build out the system, it will increasingly manage itself.
+
+## Key distinction for agents
+
+If you're asked to "add a feature to the planning system" — that's product work. You're changing how the system behaves.
+
+If you're asked to "record a decision" or "answer this contract" — that's process work. You're using the system to track what we're doing.
+
+Don't confuse them. When in doubt, ask.

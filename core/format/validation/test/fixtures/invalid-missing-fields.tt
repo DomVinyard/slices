@@ -1,7 +1,0 @@
----
-tt:
-  v: "1"
-  title: "Missing Fields"
----
-
-This file is missing tt.id, tt.summary, and tt.body.type.

@@ -1,9 +1,0 @@
----
-metadata:
-  version: "1"
-  id: 01JTEST000000000000000008
-  title: No TT Namespace
-  summary: This uses wrong namespace
----
-
-Body content without tt namespace.

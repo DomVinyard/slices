@@ -44,9 +44,11 @@ You are one agent among potentially many. You do not have global
 authority. You do not have the full picture. Here is what you are
 able to do:
 
-- Read all constitutional files — law (`.constitution/LAW.✅`),
-  amendments (`.constitution/amendments/`), and the founding document
-  (`.constitution/FOUNDING.✅`)
+- Read law (`.constitution/LAW.✅`) and the founding document
+  (`.constitution/FOUNDING.✅`). Law is the compiled operating source
+  — it already incorporates all accepted amendments. Do not read raw
+  amendments for guidance; that risks re-deriving what law already
+  synthesized.
 - Create new draft amendments (`.📝` files with `status: draft`)
 - Edit existing draft amendments (`.📝` only)
 - Set a draft amendment to `status: review` to begin the evaluation
@@ -107,8 +109,8 @@ This single file contains the compiled, current directives for this
 workspace. It is your primary operating instruction. Law encodes state
 in its filename: `LAW.✅` (active), `LAW.⏳` (resolving),
 `LAW.❌` (corrupted). When law is resolving (`LAW.⏳`), it must
-be reconciled before you can trust it — the reconciliation procedure
-is defined in this skill's `resources/`.
+be reconciled before you can trust it — the codifier subagent handles
+this automatically.
 
 ### Contracts
 
@@ -137,9 +139,10 @@ you should expect:
   `status: review` and the body matches the approval hash, the system
   may auto-promote it to accepted.
 - **When your turn ends**, the system checks for pending constitutional
-  work — unevaluated drafts, stale law — and may **inject follow-up
-  slash commands** into your next turn (e.g.
-  `/constitution-evaluate-suitability`, `/constitution-reconcile-law`).
+  work — unevaluated drafts, stale law — and may **spawn specialized
+  subagents** to handle them (e.g. `/ratifier` for amendment evaluation,
+  `/codifier` for law reconciliation). These subagents have their own
+  prompts and restricted tool access.
 - **Continuously**, the system detects hash drift between accepted
   amendments and law. If they diverge, law is automatically marked
   resolving (`LAW.✅` → `LAW.⏳`).
@@ -174,18 +177,19 @@ it. Do not resolve it silently.
 
 ## Constitutional procedures
 
-The following procedures exist but you do not invoke them yourself.
-They are injected into your context automatically when the environment
-detects that conditions require them (e.g. a draft reaches review
-status, law becomes stale after an amendment is accepted):
+The following subagents handle constitutional procedures automatically.
+They are spawned by the environment when conditions require them — you
+do not invoke them yourself. Each has its own prompt and restricted
+tool access:
 
-- **Suitability evaluation** — evaluates draft amendments for promotion
-- **Founding evaluation** — evaluates the founding document for
-  acceptance as the constitutional grundnorm
-- **Law reconciliation** — reconciles stale law after amendment
-  acceptance
+- **Ratifier** (`/ratifier`) — evaluates draft amendments for
+  suitability and ratifies them. Tools: read-only + shell (all
+  mutations go through scripts).
+- **Framer** (`/framer`) — evaluates the founding document for
+  acceptance as the constitutional grundnorm. Tools: read-only + shell.
+- **Codifier** (`/codifier`) — compiles accepted amendments into
+  derived law. Tools: read + write + shell (needs direct file editing
+  for law content).
 
-When one of these is injected, follow the instructions it provides.
-The procedural scripts in this skill's `scripts/` directory and the
-sub-procedure definitions in `resources/` support these injected
-procedures — you do not need to browse or select them yourself.
+The procedural scripts in this skill's `scripts/` directory support
+these subagents. You do not need to browse or run them yourself.

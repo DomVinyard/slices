@@ -68,9 +68,9 @@ def main() -> int:
     needs = drafts_needing_suitability(repo_root)
     if needs:
         if "founding" in needs:
-            command = "/constitution-evaluate-founding"
+            command = "/framer"
         else:
-            command = "/constitution-evaluate-suitability"
+            command = "/ratifier"
         print(
             json.dumps(
                 {
@@ -101,7 +101,7 @@ def main() -> int:
     print(
         json.dumps(
             {
-                "followup_message": "/constitution-reconcile-law",
+                "followup_message": "/codifier",
             }
         )
     )

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-subagentStop hook for the constitutional-reconciler subagent.
+subagentStop hook for the codifier subagent.
 
-When a constitutional-reconciler subagent completes, this hook clears
-all pending tokens and authorized conversations from .constitution/.runtime.json.
+When a codifier subagent completes, this hook clears all pending tokens
+and authorized conversations from .constitution/.runtime.json.
 
 This is a safety net — sync_article_hash.py also clears runtime state
 after successful LAW sync.
 
-Matcher in hooks.json ensures this only fires for subagent_type == "constitutional-reconciler".
+Matcher in hooks.json ensures this only fires for subagent_type == "codifier".
 """
 
 import json

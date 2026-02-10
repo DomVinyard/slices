@@ -1,6 +1,12 @@
+---
+name: ratifier
+description: Evaluates draft amendments for suitability and ratifies them into constitutional law. Automatically invoked when amendments reach review status.
+tools: Read, Grep, Glob, Shell
+---
+
 # Evaluate Amendment Suitability
 
-You are the constitutional suitability gate. This command triggers when an amendment reaches `status: review`.
+You are the constitutional ratifier. You evaluate whether draft amendments are suitable to become part of derived law, and ratify them if they pass.
 
 ## Procedure
 
@@ -32,16 +38,16 @@ Assess:
 - Promote the amendment:
   `python3 .cursor/skills/constitution/scripts/promote_article.py --article "<amendment_path>"`
   (renames `timestamp.📝` to `timestamp.✅`, marks law as resolving)
-- Then execute `/constitution-reconcile-law` to reconcile law with the new amendment.
 - Report the result to the user in this exact format:
-  - A few bullet points describing how law changed (what sections were added/rewritten/removed and why)
-  - Then on its own line: `✅ LAW UPDATED`
+  - A few bullet points describing what the amendment commits to and how it will change law
+  - Then on its own line: `✅ AMENDMENT RATIFIED`
 - No other status output. No amendment lifecycle summary, no hashes, no verification details.
+- Law reconciliation happens automatically after this — you do not trigger it.
 
 ### 3b. On rejection (NEEDS_INPUT)
 
-- Set frontmatter `status: draft` and `apply_ok_at: ❌`.
-- Add rejection frontmatter: `rejection_reason_code` and `rejection_request` with the specific issue.
+- Apply the result:
+  `python3 .cursor/skills/constitution/scripts/apply_suitability_result.py --article "<amendment_path>" --result NEEDS_INPUT --reason-code "<reason_code>" --request "<clarification_request>"`
 - Do NOT start law reconciliation.
 - Report the result to the user in this exact format:
   - A few bullet points describing the rejection reason

@@ -23,8 +23,11 @@ from pathlib import Path
 
 SKILL_INSTALL_NAME = "constitution"
 HOOK_COMMAND_PREFIX = ".cursor/skills/constitution/scripts/"
-COMMAND_PREFIX = "constitution-"
-AGENT_PREFIX = "constitutional-"
+SKILL_COMMANDS = {"new-law.md", "review-law.md"}
+SKILL_AGENTS = {"ratifier.md", "framer.md", "codifier.md"}
+# Old names from previous installs that should be cleaned up
+OLD_COMMAND_PREFIX = "constitution-"
+OLD_AGENT_PREFIX = "constitutional-"
 # Known prefixes from previous install locations that should be cleaned up
 OLD_HOOK_PREFIXES = [
     ".constitution/src/scripts/",
@@ -291,8 +294,10 @@ def remove_hooks(target: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def _is_constitution_command(path: Path) -> bool:
-    """Check if a command file belongs to the constitution skill by prefix."""
-    return path.name.startswith(COMMAND_PREFIX) and path.name.endswith(".md")
+    """Check if a command file belongs to the constitution skill (current or old names)."""
+    if path.name in SKILL_COMMANDS:
+        return True
+    return path.name.startswith(OLD_COMMAND_PREFIX) and path.name.endswith(".md")
 
 
 def install_commands_copy(target: Path, skill_root: Path) -> list[str]:
@@ -359,7 +364,7 @@ def freeze_commands(target: Path) -> None:
 
 
 def remove_commands(target: Path) -> None:
-    """Remove constitution-prefixed command files from .cursor/commands/."""
+    """Remove constitution skill command files from .cursor/commands/."""
     commands_dir = get_commands_dir(target)
     if not commands_dir.exists():
         return
@@ -380,8 +385,10 @@ def remove_commands(target: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def _is_constitution_agent(path: Path) -> bool:
-    """Check if an agent file belongs to the constitution skill by prefix."""
-    return path.name.startswith(AGENT_PREFIX) and path.name.endswith(".md")
+    """Check if an agent file belongs to the constitution skill (current or old names)."""
+    if path.name in SKILL_AGENTS:
+        return True
+    return path.name.startswith(OLD_AGENT_PREFIX) and path.name.endswith(".md")
 
 
 def install_agents_copy(target: Path, skill_root: Path) -> list[str]:
@@ -448,7 +455,7 @@ def freeze_agents(target: Path) -> None:
 
 
 def remove_agents(target: Path) -> None:
-    """Remove constitution-prefixed agent files from .cursor/agents/."""
+    """Remove constitution skill agent files from .cursor/agents/."""
     agents_dir = get_agents_dir(target)
     if not agents_dir.exists():
         return

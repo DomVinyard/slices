@@ -38,4 +38,4 @@ Create a new file in `.constitution/amendments/` with:
 
 ## After drafting
 
-Present the draft to the user for review. The user should read it and confirm the commitments are accurate before proceeding to `/constitution-amendment-review`.
+Present the draft to the user for review. The user should read it and confirm the commitments are accurate before proceeding to `/review-law`.

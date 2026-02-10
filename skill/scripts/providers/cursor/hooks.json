@@ -26,13 +26,13 @@
     "subagentStart": [
       {
         "command": "python3 .cursor/skills/constitution/scripts/hook_subagent_start.py",
-        "matcher": "constitutional-reconciler"
+        "matcher": "codifier"
       }
     ],
     "subagentStop": [
       {
         "command": "python3 .cursor/skills/constitution/scripts/hook_subagent_stop.py",
-        "matcher": "constitutional-reconciler"
+        "matcher": "codifier"
       }
     ]
   }

@@ -1,1 +1,0 @@
-../../skill/scripts/providers/cursor/agents/constitutional-reconciler.md

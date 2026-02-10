@@ -1,0 +1,28 @@
+---
+status: draft
+apply_ok_at: "⏳"
+---
+
+# Founding perpetuity, subagent architecture, and agent information model
+
+Supersedes the founding document description in prior law (which says "immutable") and the `constitutional-reconciler` references throughout.
+
+## Founding document perpetuity
+
+The founding document (`FOUNDING.✅`) is perpetual, not merely immutable. It contains only presuppositions that will always be true for this constitutional order. Immutability here is a statement about identity: the founding document defines what this constitution is. Amendments can supersede earlier amendments; nothing supersedes the founding document. If the founding presuppositions no longer hold, the correct response is to establish a new constitution entirely, not to amend the founding document.
+
+## Constitutional subagent architecture
+
+Automated constitutional procedures SHALL be executed by named subagents with structurally restricted tool access, not by injected commands running in the parent agent context. Each subagent has its own prompt and a declared set of permitted tools.
+
+The constitutional subagents are:
+
+- **Ratifier** — evaluates draft amendments for suitability and ratifies them. Permitted tools: read-only + shell. All mutations go through procedural scripts.
+- **Framer** — evaluates the founding document for acceptance as the grundnorm. Permitted tools: read-only + shell. All mutations go through procedural scripts.
+- **Codifier** — compiles accepted amendments into derived law. Permitted tools: read + write + shell. Requires direct file editing for law content reconciliation. The codifier's `subagentStart` hook is the sole gate for LAW write authorization.
+
+Tool restrictions are structural enforcement — the subagent literally cannot use tools it is not granted. This is stronger than guard-based enforcement and reduces reliance on hook-based denial.
+
+## Law as sole compiled source
+
+Law is the compiled operating source for agents. It already incorporates all accepted amendments. Agents operating under law SHALL read law for guidance, not raw accepted amendments. Reading raw amendments risks re-deriving what law already synthesized, which is the kind of silent re-interpretation the constitutional system exists to prevent. Amendments are source material for the codifier during reconciliation, not for general agent consumption.

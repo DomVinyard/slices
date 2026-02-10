@@ -1,0 +1,1 @@
+../../skill/scripts/providers/cursor/agents/ratifier.md

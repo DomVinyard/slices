@@ -1,6 +1,6 @@
 # Submit Amendment for Review
 
-A draft amendment is ready for suitability evaluation. Your job is to set its status to `review` so the constitutional suitability evaluator picks it up.
+A draft amendment is ready for suitability evaluation. Your job is to set its status to `review` so the constitutional ratifier picks it up.
 
 ## Procedure
 
@@ -14,7 +14,7 @@ A draft amendment is ready for suitability evaluation. Your job is to set its st
    apply_ok_at: "⏳"
    ---
    ```
-5. The suitability evaluator will automatically run at the end of this agent loop (via the stop hook) and evaluate whether the amendment is clear, coherent, and operable enough to become law.
+5. The ratifier will automatically run at the end of this agent loop and evaluate whether the amendment is clear, coherent, and operable enough to become law.
 
 ## Constraints
 

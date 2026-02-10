@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-subagentStart hook for the constitutional-reconciler subagent.
+subagentStart hook for the codifier subagent.
 
-When a constitutional-reconciler subagent is spawned, this hook generates
-a pending authorization token in .constitution/.runtime.json. The token
-is later claimed by the subagent's preToolUse hook on first LAW write.
+When a codifier subagent is spawned, this hook generates a pending
+authorization token in .constitution/.runtime.json. The token is later
+claimed by the subagent's preToolUse hook on first LAW write.
 
-Matcher in hooks.json ensures this only fires for subagent_type == "constitutional-reconciler".
+Matcher in hooks.json ensures this only fires for subagent_type == "codifier".
 """
 
 import json

@@ -8,9 +8,8 @@ description: >
   constitutionally governed workspace. A constitutional planning system
   controls how truth is recorded, how decisions propagate, and what you
   are permitted to do. .constitution/LAW.✅ contains binding directives
-  derived from accepted constitutional amendments and grounded in the
-  founding document (.constitution/FOUNDING.✅). You must read and obey
-  law. The environment automatically enforces mechanical constraints,
+  derived from accepted constitutional amendments. You must read and
+  obey law. The environment automatically enforces mechanical constraints,
   but your compliance must extend beyond what enforcement can catch.
   This skill is active whenever you operate in a workspace
   containing a .constitution/ directory or whenever you touch files
@@ -44,11 +43,10 @@ You are one agent among potentially many. You do not have global
 authority. You do not have the full picture. Here is what you are
 able to do:
 
-- Read law (`.constitution/LAW.✅`) and the founding document
-  (`.constitution/FOUNDING.✅`). Law is the compiled operating source
-  — it already incorporates all accepted amendments. Do not read raw
-  amendments for guidance; that risks re-deriving what law already
-  synthesized.
+- Read law (`.constitution/LAW.✅`). Law is the compiled operating
+  source — it already incorporates all accepted amendments and the
+  founding document. Do not read raw amendments for guidance; that
+  risks re-deriving what law already synthesized.
 - Create new draft amendments (`.📝` files with `status: draft`)
 - Edit existing draft amendments (`.📝` only)
 - Set a draft amendment to `status: review` to begin the evaluation
@@ -62,7 +60,7 @@ The following actions will be denied by environmental guards or
 violate constitutional procedure:
 
 - Edit or delete accepted amendments (`.✅`) — immutable
-- Edit the accepted founding document (`FOUNDING.✅`) — perpetual and
+- Edit the accepted founding document (`.founding.✅`) — perpetual and
   immutable
 - Directly edit any `LAW.*` file — law is managed exclusively by
   scripts
@@ -75,24 +73,11 @@ Your job is to operate within these constraints, not around them.
 
 ## The constitutional stack
 
-### The founding document (`.constitution/FOUNDING.✅`)
+### The founding document (`.constitution/amendments/.founding.✅`)
 
-The grundnorm. The axiomatic presupposition that makes the rest of the
-system intelligible. It is not a regular amendment — it has no timestamp
-and has its own lifecycle (`FOUNDING.📝` draft -> `FOUNDING.⏳`
-review -> `FOUNDING.✅` accepted).
-
-Once accepted (`FOUNDING.✅`), the founding document is **perpetual**.
-It contains only presuppositions that will always be true for this
-constitutional order. This is not merely a version-control constraint —
-it is a statement about identity. The founding document defines what
-this constitution _is_. Amendments can supersede earlier amendments;
-nothing supersedes the founding document. If the founding
-presuppositions no longer hold, the response is not to amend the
-founding document but to establish a new constitution entirely.
-
-The founding document participates in hash computation. You read it for
-context. You do not modify it.
+The grundnorm — the axiomatic presupposition grounding the
+constitutional system. Perpetual and immutable once accepted. Its
+content is embedded in law; you do not need to read it directly.
 
 ### Amendments (`.constitution/amendments/`)
 
@@ -127,7 +112,7 @@ you should expect:
 - **Before any file write to a constitutional file**, a guard evaluates
   the write and may **deny** it with a policy message. Writes to
   accepted amendments (`.✅`), the accepted founding document
-  (`FOUNDING.✅`), and any `LAW.*` file will be denied. Writes to
+  (`.founding.✅`), and any `LAW.*` file will be denied. Writes to
   draft amendments (`.📝`) and draft/review founding documents are
   allowed.
 - **Before any shell command mentioning constitutional files**, a guard
@@ -161,7 +146,7 @@ the structural commitments are:
 - Compiled artifacts are stamped with provenance
 - No guessing — if you cannot infer safely, you emit a contract
 - Accepted amendments are immutable
-- The founding document (`FOUNDING.✅`) is perpetual and immutable
+- The founding document (`.founding.✅`) is perpetual and immutable
 - Draft-to-accepted promotion is procedural, not discretionary
 - All state transitions are deterministic filename renames by scripts
 - File extensions are emoji suffixes only (no `.md`)

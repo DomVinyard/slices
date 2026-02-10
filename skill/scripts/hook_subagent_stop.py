@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
-subagentStop hook for the codifier subagent.
+subagentStop hook for constitutional subagents (codifier, framer, ratifier).
 
-When a codifier subagent completes, this hook clears all pending tokens
-and authorized conversations from .constitution/.runtime.json.
+When a constitutional subagent completes, this hook clears the activity
+lock timestamp from the relevant file's frontmatter. This is a safety
+net — the finalization scripts (sync_article_hash.py, promote_article.py,
+promote_founding.py) also strip transient fields when the file transitions
+state.
 
-This is a safety net — sync_article_hash.py also clears runtime state
-after successful LAW sync.
-
-Matcher in hooks.json ensures this only fires for subagent_type == "codifier".
+Matcher in hooks.json: "codifier|framer|ratifier".
 """
 
 import json
 from pathlib import Path
 from typing import Any
+
+FOUNDING_DRAFT = ".founding.📝"
 
 
 def load_payload() -> dict[str, Any]:
@@ -30,25 +32,72 @@ def workspace_root(payload: dict[str, Any]) -> Path:
     return Path.cwd()
 
 
+def write_frontmatter_field(path: Path, field_name: str, value: str | None) -> None:
+    """Update or remove a single frontmatter field. Atomic write via tmp+rename."""
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        return
+    second = text.find("\n---\n", 4)
+    if second == -1:
+        return
+    frontmatter = text[4:second]
+    rest = text[second:]  # "\n---\n..." (closing delimiter + body)
+
+    lines = frontmatter.splitlines()
+    new_lines: list[str] = []
+    found = False
+    for line in lines:
+        if ":" in line:
+            key = line.split(":", 1)[0].strip()
+            if key == field_name:
+                found = True
+                if value is not None:
+                    new_lines.append(f"{field_name}: {value}")
+                continue
+        new_lines.append(line)
+
+    if not found and value is not None:
+        new_lines.append(f"{field_name}: {value}")
+
+    updated = "---\n" + "\n".join(new_lines) + rest
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(updated, encoding="utf-8")
+    tmp.rename(path)
+
+
+def _find_first_draft(amendments_dir: Path) -> Path | None:
+    """Find the first draft amendment (.📝) that is not the founding document."""
+    if not amendments_dir.exists():
+        return None
+    for path in sorted(amendments_dir.iterdir()):
+        if path.is_file() and path.suffix == ".📝" and not path.name.startswith(".founding"):
+            return path
+    return None
+
+
 def main() -> int:
     payload = load_payload()
     root = workspace_root(payload)
-    runtime_path = root / ".constitution" / ".runtime.json"
+    subagent_type = payload.get("subagent_type", "")
 
-    if not runtime_path.exists():
-        print(json.dumps({}))
-        return 0
+    if subagent_type == "codifier":
+        # Clear resolution lock — file may have already transitioned to LAW.✅
+        law_path = root / ".constitution" / "LAW.⏳"
+        if law_path.exists():
+            write_frontmatter_field(law_path, "resolution_started_at", None)
 
-    # Clear all authorization state
-    data = {"pending_tokens": [], "authorized": {}}
-    tmp = runtime_path.with_suffix(".tmp")
-    try:
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-            f.write("\n")
-        tmp.rename(runtime_path)
-    except OSError:
-        pass
+    elif subagent_type == "framer":
+        founding_path = root / ".constitution" / "amendments" / FOUNDING_DRAFT
+        if founding_path.exists():
+            write_frontmatter_field(founding_path, "evaluation_started_at", None)
+
+    elif subagent_type == "ratifier":
+        # Clear evaluation lock on any remaining drafts (they may have been promoted)
+        amendments_dir = root / ".constitution" / "amendments"
+        if amendments_dir.exists():
+            for path in amendments_dir.iterdir():
+                if path.is_file() and path.suffix == ".📝" and not path.name.startswith(".founding"):
+                    write_frontmatter_field(path, "evaluation_started_at", None)
 
     print(json.dumps({}))
     return 0

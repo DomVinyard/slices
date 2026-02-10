@@ -68,9 +68,7 @@ def mark_law_stale(repo_root: Path, accepted_amendment_relative: str) -> None:
     if not prefix:
         return
     mapping, order = parse_map(frontmatter)
-    current_hash = mapping.get("amendments_hash", '""').strip('"').strip("'")
     mapping["stale_reason"] = "amendment_accepted"
-    mapping["stale_since_hash"] = f'"{current_hash}"'
     mapping["stale_amendment_path"] = f'"{accepted_amendment_relative}"'
     # Remove status field (state is in filename)
     if "status" in mapping:
@@ -122,11 +120,12 @@ def main() -> int:
             "Draft amendment apply_ok_at must match the current trimmed body hash before promotion."
         )
 
-    # Remove status (state is in filename)
-    if "status" in mapping:
-        del mapping["status"]
-    if "status" in order:
-        order.remove("status")
+    # Remove transient fields (state is in filename)
+    for key in ["status", "evaluation_started_at"]:
+        if key in mapping:
+            del mapping[key]
+        if key in order:
+            order.remove(key)
     write_map(amendment_path, prefix, body, mapping, order)
 
     amendment_path.rename(accepted_path)

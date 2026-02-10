@@ -35,7 +35,7 @@ def discover_law() -> tuple[Path, str]:
 def discover_founding() -> tuple[Path, str] | None:
     """Returns (path, state) or None. States: founding, review, draft."""
     for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = CONSTITUTION_DIR / f"FOUNDING{suffix}"
+        p = AMENDMENTS_DIR / f".founding{suffix}"
         if p.exists():
             return p, state
     return None
@@ -46,6 +46,7 @@ def list_constitutional_files(directory: Path) -> list[Path]:
         path
         for path in directory.iterdir()
         if path.is_file() and path.suffix in VALID_SUFFIXES
+        and not path.name.startswith(".founding")
     )
 
 

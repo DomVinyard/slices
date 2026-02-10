@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import hashlib
-import json
 from pathlib import Path
 
 
@@ -35,7 +34,7 @@ def discover_law() -> tuple[Path, str]:
 def discover_founding() -> tuple[Path, str] | None:
     """Returns (path, state) or None. States: founding, review, draft."""
     for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = CONSTITUTION_DIR / f"FOUNDING{suffix}"
+        p = AMENDMENTS_DIR / f".founding{suffix}"
         if p.exists():
             return p, state
     return None
@@ -46,6 +45,7 @@ def list_constitutional_files(directory: Path) -> list[Path]:
         path
         for path in directory.iterdir()
         if path.is_file() and path.suffix in VALID_SUFFIXES
+        and not path.name.startswith(".founding")
     )
 
 
@@ -99,7 +99,15 @@ def parse_frontmatter_parts(text: str) -> tuple[str, str, str]:
     return "---\n", frontmatter, body
 
 
-def upsert_amendments_hash(frontmatter: str, new_hash: str) -> str:
+def latest_accepted_amendment_stem(directory: Path) -> str | None:
+    """Return the stem (timestamp) of the newest accepted amendment, or None."""
+    accepted = list_accepted_amendments(directory)
+    if not accepted:
+        return None
+    return accepted[-1].stem
+
+
+def upsert_amendments_hash(frontmatter: str, new_hash: str, last_amendment: str | None) -> str:
     lines = frontmatter.splitlines()
     key_values: dict[str, str] = {}
     order: list[str] = []
@@ -115,14 +123,18 @@ def upsert_amendments_hash(frontmatter: str, new_hash: str) -> str:
         key_values[key] = value
 
     key_values["amendments_hash"] = f'"{new_hash}"'
+    if last_amendment is not None:
+        key_values["last_reconciled_amendment"] = f'"{last_amendment}"'
     # Remove stale/transient fields
     for key in ["stale_reason", "stale_since_hash", "stale_amendment_path", "pending_reason_code",
-                 "status", "articles_hash", "stale_article_path"]:
+                 "status", "articles_hash", "stale_article_path", "resolution_started_at"]:
         if key in key_values:
             del key_values[key]
 
     if "amendments_hash" not in order:
         order.append("amendments_hash")
+    if "last_reconciled_amendment" not in order and last_amendment is not None:
+        order.append("last_reconciled_amendment")
 
     updated: list[str] = []
     for key in order:
@@ -138,10 +150,11 @@ def upsert_amendments_hash(frontmatter: str, new_hash: str) -> str:
 def main() -> int:
     law_path, law_state = discover_law()
     amendment_hash = compute_amendments_hash()
+    last_amendment = latest_accepted_amendment_stem(AMENDMENTS_DIR)
 
     text = law_path.read_text(encoding="utf-8")
     prefix, frontmatter, body = parse_frontmatter_parts(text)
-    updated_frontmatter = upsert_amendments_hash(frontmatter, amendment_hash)
+    updated_frontmatter = upsert_amendments_hash(frontmatter, amendment_hash, last_amendment)
     updated_text = f"{prefix}{updated_frontmatter}\n---\n{body}"
 
     # Always rename to LAW.✅ (active) after successful sync
@@ -152,19 +165,8 @@ def main() -> int:
     print(f"updated: {active_path.relative_to(REPO_ROOT).as_posix()}")
 
     print(f"amendments_hash: {amendment_hash}")
-
-    # Clear runtime authorization state after successful sync
-    runtime_path = CONSTITUTION_DIR / ".runtime.json"
-    if runtime_path.exists():
-        try:
-            data = {"pending_tokens": [], "authorized": {}}
-            tmp = runtime_path.with_suffix(".tmp")
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-                f.write("\n")
-            tmp.rename(runtime_path)
-        except OSError:
-            pass
+    if last_amendment:
+        print(f"last_reconciled_amendment: {last_amendment}")
 
     return 0
 

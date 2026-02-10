@@ -1,7 +1,7 @@
 ---
 name: ratifier
 description: Evaluates draft amendments for suitability and ratifies them into constitutional law. Automatically invoked when amendments reach review status.
-tools: Read, Grep, Glob, Shell
+readonly: true
 ---
 
 # Evaluate Amendment Suitability

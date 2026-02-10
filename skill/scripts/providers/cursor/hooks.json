@@ -1,6 +1,11 @@
 {
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      {
+        "command": "python3 .cursor/skills/constitution/scripts/hook_session_start.py"
+      }
+    ],
     "preToolUse": [
       {
         "command": "python3 .cursor/skills/constitution/scripts/hook_pre_tool_use.py"
@@ -9,7 +14,7 @@
     "beforeShellExecution": [
       {
         "command": "python3 .cursor/skills/constitution/scripts/hook_before_shell_execution.py",
-        "matcher": "(\\.constitution/amendments|FOUNDING|LAW)"
+        "matcher": "(\\.constitution/amendments|\\.founding|LAW)"
       }
     ],
     "afterFileEdit": [
@@ -26,13 +31,13 @@
     "subagentStart": [
       {
         "command": "python3 .cursor/skills/constitution/scripts/hook_subagent_start.py",
-        "matcher": "codifier"
+        "matcher": "codifier|framer|ratifier"
       }
     ],
     "subagentStop": [
       {
         "command": "python3 .cursor/skills/constitution/scripts/hook_subagent_stop.py",
-        "matcher": "codifier"
+        "matcher": "codifier|framer|ratifier"
       }
     ]
   }

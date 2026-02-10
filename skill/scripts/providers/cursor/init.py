@@ -23,7 +23,7 @@ from pathlib import Path
 
 SKILL_INSTALL_NAME = "constitution"
 HOOK_COMMAND_PREFIX = ".cursor/skills/constitution/scripts/"
-SKILL_COMMANDS = {"new-law.md", "review-law.md"}
+SKILL_COMMANDS = {"new-law.md", "review-law.md", "force-resolve-law.md"}
 SKILL_AGENTS = {"ratifier.md", "framer.md", "codifier.md"}
 # Old names from previous installs that should be cleaned up
 OLD_COMMAND_PREFIX = "constitution-"
@@ -84,8 +84,14 @@ def detect_install_state(install_dir: Path) -> str:
     return "copied"
 
 
+_FORCE = False
+
+
 def ask_user(prompt: str, choices: str) -> str:
-    """Ask user for a single-character choice."""
+    """Ask user for a single-character choice. In --force mode, auto-selects first option."""
+    if _FORCE:
+        print(f"{prompt} [{choices}]: {choices[0]} (auto --force)")
+        return choices[0]
     while True:
         response = input(f"{prompt} [{choices}]: ").strip().lower()
         if response and response[0] in choices:
@@ -397,6 +403,11 @@ def install_agents_copy(target: Path, skill_root: Path) -> list[str]:
     if not agents_src.exists():
         return []
     agents_dir = get_agents_dir(target)
+
+    # If agents dir is a symlink from a prior --link install, remove it first
+    if agents_dir.is_symlink():
+        agents_dir.unlink()
+
     agents_dir.mkdir(parents=True, exist_ok=True)
 
     # Remove old constitution agents first
@@ -415,34 +426,46 @@ def install_agents_copy(target: Path, skill_root: Path) -> list[str]:
 
 
 def install_agents_link(target: Path, skill_root: Path) -> list[str]:
-    """Symlink agent .md files into .cursor/agents/. Returns installed names."""
+    """Symlink the agents directory into .cursor/agents/. Returns installed names."""
     agents_src = get_cursor_provider_dir(skill_root) / "agents"
     if not agents_src.exists():
         return []
     agents_dir = get_agents_dir(target)
-    agents_dir.mkdir(parents=True, exist_ok=True)
 
-    # Remove old constitution agents first
-    for existing in agents_dir.iterdir():
-        if _is_constitution_agent(existing):
-            existing.unlink()
+    # Remove existing agents dir (whether real dir or stale symlink)
+    if agents_dir.is_symlink():
+        agents_dir.unlink()
+    elif agents_dir.exists():
+        shutil.rmtree(agents_dir)
+
+    agents_dir.parent.mkdir(parents=True, exist_ok=True)
+    relative_symlink(agents_src, agents_dir)
 
     installed: list[str] = []
     for md_file in sorted(agents_src.glob("*.md")):
-        link_path = agents_dir / md_file.name
-        relative_symlink(md_file, link_path)
-        installed.append(f"{md_file.name} -> (symlink)")
+        installed.append(f"{md_file.name} -> (dir symlink)")
 
     if installed:
-        print(f"  Agents: {agents_dir} ({len(installed)} linked)")
+        print(f"  Agents: {agents_dir} -> (dir symlink, {len(installed)} agents)")
     return installed
 
 
 def freeze_agents(target: Path) -> None:
-    """Replace any symlinked agent files with copies."""
+    """Replace a symlinked agents directory (or individual symlinks) with copies."""
     agents_dir = get_agents_dir(target)
-    if not agents_dir.exists():
+    if not agents_dir.exists() and not agents_dir.is_symlink():
         return
+
+    # Directory-level symlink: replace with a real dir containing copies
+    if agents_dir.is_symlink():
+        resolved = agents_dir.resolve()
+        agents_dir.unlink()
+        shutil.copytree(resolved, agents_dir)
+        count = sum(1 for f in agents_dir.iterdir() if f.suffix == ".md")
+        print(f"  Agents: dir symlink frozen ({count} agents copied)")
+        return
+
+    # Legacy per-file symlinks
     frozen = 0
     for item in agents_dir.iterdir():
         if _is_constitution_agent(item) and item.is_symlink():
@@ -457,8 +480,16 @@ def freeze_agents(target: Path) -> None:
 def remove_agents(target: Path) -> None:
     """Remove constitution skill agent files from .cursor/agents/."""
     agents_dir = get_agents_dir(target)
-    if not agents_dir.exists():
+    if not agents_dir.exists() and not agents_dir.is_symlink():
         return
+
+    # Directory-level symlink: just remove the symlink
+    if agents_dir.is_symlink():
+        agents_dir.unlink()
+        print(f"  Removed {agents_dir} (was dir symlink)")
+        return
+
+    # Real directory with individual files
     removed = 0
     for item in agents_dir.iterdir():
         if _is_constitution_agent(item):
@@ -677,7 +708,13 @@ def cmd_status(skill_root: Path, target: Path) -> int:
 
     # Agents state
     agents_dir = get_agents_dir(target)
-    if agents_dir.exists():
+    if agents_dir.is_symlink():
+        resolved = agents_dir.resolve()
+        agent_files = [f for f in agents_dir.iterdir() if f.suffix == ".md"]
+        print(f"Agents:      (dir symlink -> {resolved})")
+        for f in sorted(agent_files, key=lambda p: p.name):
+            print(f"  {f.name}")
+    elif agents_dir.exists():
         agent_files = [f for f in agents_dir.iterdir() if _is_constitution_agent(f)]
         if agent_files:
             linked = any(f.is_symlink() for f in agent_files)
@@ -713,11 +750,15 @@ def parse_args() -> argparse.Namespace:
     group.add_argument("--unlink", action="store_true", help="Convert symlinks to copies")
     group.add_argument("--uninstall", action="store_true", help="Remove skill and hooks")
     group.add_argument("--status", action="store_true", help="Show install state")
+    parser.add_argument("--force", "-y", action="store_true",
+                        help="Non-interactive mode: auto-confirm all prompts (for CI)")
     return parser.parse_args()
 
 
 def main() -> int:
+    global _FORCE
     args = parse_args()
+    _FORCE = args.force
     skill_root = find_skill_root()
     target = args.target.resolve()
 

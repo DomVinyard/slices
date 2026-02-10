@@ -1,7 +1,7 @@
 ---
 name: framer
 description: Evaluates the founding document for acceptance as the constitutional grundnorm. Automatically invoked when the founding document reaches review status.
-tools: Read, Grep, Glob, Shell
+readonly: true
 ---
 
 # Evaluate Founding Document Suitability
@@ -51,12 +51,12 @@ Ambiguity tolerance is explicitly higher than for amendment suitability. The fou
 
 - Every suitability result SHALL be applied via:
   - `python3 .cursor/skills/constitution/scripts/apply_founding_result.py --result APPLY_OK`
-    (stamps `apply_ok_at` with body hash, renames `FOUNDING.📝` to `FOUNDING.⏳`)
+    (stamps `apply_ok_at` with body hash, renames `.founding.📝` to `.founding.⏳`)
   - `python3 .cursor/skills/constitution/scripts/apply_founding_result.py --result NEEDS_INPUT --reason-code "<reason_code>" --request "<clarification_request>"`
-    (stamps rejection metadata, keeps as `FOUNDING.📝`)
+    (stamps rejection metadata, keeps as `.founding.📝`)
 - After APPLY_OK, promotion is done via:
   - `python3 .cursor/skills/constitution/scripts/promote_founding.py`
-    (verifies `apply_ok_at`, renames `FOUNDING.⏳` to `FOUNDING.✅`)
+    (verifies `apply_ok_at`, renames `.founding.⏳` to `.founding.✅`)
 
 ## Output contract
 

@@ -86,7 +86,7 @@ def is_founding_document(path: Path, root: Path) -> bool:
         relative = path.resolve().relative_to(root.resolve()).as_posix()
     except Exception:
         return False
-    return relative.startswith(".constitution/FOUNDING.") and path.suffix in VALID_SUFFIXES
+    return relative.startswith(".constitution/amendments/.founding.") and path.suffix in VALID_SUFFIXES
 
 
 def is_law_file(path: Path, root: Path) -> bool:
@@ -117,9 +117,9 @@ def discover_law(root: Path) -> tuple[Path, str] | None:
 
 def discover_founding(root: Path) -> tuple[Path, str] | None:
     """Returns (path, state) or None. States: founding, review, draft."""
-    constitution_dir = root / ".constitution"
+    amendments_dir = root / ".constitution" / "amendments"
     for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = constitution_dir / f"FOUNDING{suffix}"
+        p = amendments_dir / f".founding{suffix}"
         if p.exists():
             return p, state
     return None
@@ -139,6 +139,7 @@ def list_constitutional_files(directory: Path) -> list[Path]:
         path
         for path in directory.iterdir()
         if path.is_file() and path.suffix in VALID_SUFFIXES
+        and not path.name.startswith(".founding")
     )
 
 
@@ -198,7 +199,7 @@ def parse_frontmatter_map(frontmatter: str) -> tuple[dict[str, str], list[str]]:
 
 
 def write_frontmatter(path: Path, prefix: str, body: str, mapping: dict[str, str], order: list[str]) -> None:
-    for key in ["stale_reason", "stale_since_hash", "stale_amendment_path"]:
+    for key in ["stale_reason", "stale_amendment_path"]:
         if key in mapping and key not in order:
             order.append(key)
 
@@ -231,7 +232,6 @@ def mark_law_stale_if_drift(root: Path) -> None:
         return
     # Hash drift detected — rename to resolving
     mapping["stale_reason"] = "amendments_drift_detected"
-    mapping["stale_since_hash"] = f'"{law_hash}"'
     if "stale_amendment_path" in mapping:
         del mapping["stale_amendment_path"]
     if "status" in mapping:
@@ -268,7 +268,7 @@ def main() -> int:
             _, founding_state = founding
             if founding_state == "founding":
                 deny(
-                    "Constitutional law: FOUNDING.✅ is the accepted grundnorm and is immutable."
+                    "Constitutional law: .founding.✅ is the accepted grundnorm and is immutable."
                 )
                 return 0
             # Draft or review state — allow edits
@@ -278,56 +278,18 @@ def main() -> int:
         allow()
         return 0
 
-    # --- LAW file guard (token-based authorization) ---
+    # --- LAW file guard (file-state authorization) ---
     law_targets = [p for p in normalized if is_law_file(p, root)]
     if law_targets:
-        conversation_id = payload.get("conversation_id", "")
-        runtime_path = root / ".constitution" / ".runtime.json"
-
-        # Fail-closed: if no runtime file, deny
-        if not runtime_path.exists():
-            deny(
-                "Constitutional law: LAW files are derived artifacts. No authorization token found (.runtime.json missing)."
-            )
-            return 0
-
-        try:
-            with open(runtime_path, encoding="utf-8") as f:
-                runtime = json.load(f)
-        except (json.JSONDecodeError, OSError):
-            deny(
-                "Constitutional law: LAW files are derived artifacts. Authorization state unreadable."
-            )
-            return 0
-
-        authorized = runtime.get("authorized", {})
-        pending_tokens = runtime.get("pending_tokens", [])
-
-        # Already authorized — allow
-        if conversation_id and conversation_id in authorized:
-            allow()
-            return 0
-
-        # Pending token available — claim it and allow
-        if pending_tokens and conversation_id:
-            token = pending_tokens.pop(0)
-            authorized[conversation_id] = token
-            runtime["authorized"] = authorized
-            runtime["pending_tokens"] = pending_tokens
-            try:
-                tmp = runtime_path.with_suffix(".tmp")
-                with open(tmp, "w", encoding="utf-8") as f:
-                    json.dump(runtime, f, indent=2)
-                    f.write("\n")
-                tmp.rename(runtime_path)
-            except OSError:
-                pass
-            allow()
-            return 0
-
-        # No authorization — deny
+        result = discover_law(root)
+        if result is not None:
+            _, law_state = result
+            if law_state == "resolving":  # LAW.⏳ — open for codifier edits
+                allow()
+                return 0
         deny(
-            "Constitutional law: LAW files are derived artifacts managed by constitutional scripts. Direct edits are not permitted."
+            "Constitutional law: LAW files are derived artifacts. "
+            "Only LAW.⏳ (resolving state) is writable during reconciliation."
         )
         return 0
 

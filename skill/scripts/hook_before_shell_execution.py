@@ -22,12 +22,12 @@ def load_payload() -> dict[str, Any]:
 
 
 def mentions_constitutional_files(command: str, root: Path) -> bool:
-    """Check if command mentions amendments, FOUNDING, or LAW."""
+    """Check if command mentions amendments, .founding, or LAW."""
     amendments_rel = ".constitution/amendments"
     amendments_abs = str((root / ".constitution" / "amendments").resolve())
     if amendments_rel in command or amendments_abs in command:
         return True
-    if "FOUNDING" in command:
+    if ".founding" in command:
         return True
     if "LAW" in command:
         return True
@@ -148,8 +148,8 @@ def main() -> int:
             json.dumps(
                 {
                     "permission": "deny",
-                    "user_message": "Constitutional law: accepted amendments and FOUNDING.✅ are immutable. LAW is managed by constitutional scripts. You may append new draft amendments (.📝). Promotion to ✅ is reserved for constitutional procedures.",
-                    "agent_message": "Apply constitutional policy: append new amendments as drafts, treat ✅ as immutable, LAW and FOUNDING are managed by scripts only.",
+                    "user_message": "Constitutional law: accepted amendments and .founding.✅ are immutable. LAW is managed by constitutional scripts. You may append new draft amendments (.📝). Promotion to ✅ is reserved for constitutional procedures.",
+                    "agent_message": "Apply constitutional policy: append new amendments as drafts, treat ✅ as immutable, LAW and .founding are managed by scripts only.",
                 }
             )
         )

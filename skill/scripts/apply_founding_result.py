@@ -17,9 +17,9 @@ def _find_repo_root() -> Path:
 
 def discover_founding(root: Path) -> tuple[Path, str] | None:
     """Returns (path, state) or None. States: founding, review, draft."""
-    constitution_dir = root / ".constitution"
+    amendments_dir = root / ".constitution" / "amendments"
     for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = constitution_dir / f"FOUNDING{suffix}"
+        p = amendments_dir / f".founding{suffix}"
         if p.exists():
             return p, state
     return None
@@ -27,7 +27,7 @@ def discover_founding(root: Path) -> tuple[Path, str] | None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Apply founding suitability result to FOUNDING document."
+        description="Apply founding suitability result to founding document."
     )
     parser.add_argument("--result", required=True, choices=["APPLY_OK", "NEEDS_INPUT"])
     parser.add_argument("--reason-code", default="")
@@ -79,12 +79,12 @@ def main() -> int:
     repo_root = _find_repo_root()
     result = discover_founding(repo_root)
     if result is None:
-        raise FileNotFoundError("No FOUNDING document found.")
+        raise FileNotFoundError("No founding document found.")
 
     founding_path, founding_state = result
 
     if founding_state == "founding":
-        raise ValueError("Founding document is already accepted (FOUNDING.✅) and is immutable.")
+        raise ValueError("Founding document is already accepted (.founding.✅) and is immutable.")
 
     text = founding_path.read_text(encoding="utf-8")
     prefix, frontmatter, body = parse_frontmatter(text)
@@ -101,7 +101,7 @@ def main() -> int:
                     order.remove(key)
         write_map(founding_path, prefix, body, mapping, order)
         # Deterministic rename: draft -> review
-        review_path = repo_root / ".constitution" / "FOUNDING.⏳"
+        review_path = repo_root / ".constitution" / "amendments" / ".founding.⏳"
         if founding_path != review_path:
             founding_path.rename(review_path)
         print("founding_suitability_applied=APPLY_OK")
@@ -118,7 +118,7 @@ def main() -> int:
         write_map(founding_path, prefix, body, mapping, order)
         # If in review, go back to draft
         if founding_state == "review":
-            draft_path = repo_root / ".constitution" / "FOUNDING.📝"
+            draft_path = repo_root / ".constitution" / "amendments" / ".founding.📝"
             founding_path.rename(draft_path)
         print("founding_suitability_applied=NEEDS_INPUT")
 

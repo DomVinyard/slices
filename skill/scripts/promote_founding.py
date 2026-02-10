@@ -16,9 +16,9 @@ def _find_repo_root() -> Path:
 
 def discover_founding(root: Path) -> tuple[Path, str] | None:
     """Returns (path, state) or None. States: founding, review, draft."""
-    constitution_dir = root / ".constitution"
+    amendments_dir = root / ".constitution" / "amendments"
     for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = constitution_dir / f"FOUNDING{suffix}"
+        p = amendments_dir / f".founding{suffix}"
         if p.exists():
             return p, state
     return None
@@ -65,15 +65,15 @@ def main() -> int:
     repo_root = _find_repo_root()
     result = discover_founding(repo_root)
     if result is None:
-        raise FileNotFoundError("No FOUNDING document found.")
+        raise FileNotFoundError("No founding document found.")
 
     founding_path, founding_state = result
 
     if founding_state == "founding":
-        raise ValueError("Founding document is already accepted (FOUNDING.✅).")
+        raise ValueError("Founding document is already accepted (.founding.✅).")
     if founding_state != "review":
         raise ValueError(
-            f"Founding document must be in review state (FOUNDING.⏳), found: {founding_path.name}"
+            f"Founding document must be in review state (.founding.⏳), found: {founding_path.name}"
         )
 
     text = founding_path.read_text(encoding="utf-8")
@@ -90,7 +90,7 @@ def main() -> int:
         )
 
     # Clean up transient fields
-    for key in ["needs_input_reason_code", "needs_input_request", "status", "apply_ok_at"]:
+    for key in ["needs_input_reason_code", "needs_input_request", "status", "apply_ok_at", "evaluation_started_at"]:
         if key in mapping:
             del mapping[key]
             if key in order:
@@ -99,7 +99,7 @@ def main() -> int:
     write_map(founding_path, prefix, body, mapping, order)
 
     # Deterministic rename: review -> founding
-    accepted_path = repo_root / ".constitution" / "FOUNDING.✅"
+    accepted_path = repo_root / ".constitution" / "amendments" / ".founding.✅"
     founding_path.rename(accepted_path)
     relative = accepted_path.relative_to(repo_root).as_posix()
     print(f"promoted_founding={relative}")

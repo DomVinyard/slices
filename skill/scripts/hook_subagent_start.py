@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """
-subagentStart hook for the codifier subagent.
+subagentStart hook for constitutional subagents (codifier, framer, ratifier).
 
-When a codifier subagent is spawned, this hook generates a pending
-authorization token in .constitution/.runtime.json. The token is later
-claimed by the subagent's preToolUse hook on first LAW write.
+When a constitutional subagent is spawned, this hook refreshes the
+activity lock timestamp on the relevant file's frontmatter to confirm
+that the subagent actually started (the stop hook sets the initial lock
+before delegation).
 
-Matcher in hooks.json ensures this only fires for subagent_type == "codifier".
+Matcher in hooks.json: "codifier|framer|ratifier".
 """
 
 import json
-import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+FOUNDING_DRAFT = ".founding.📝"
 
 
 def load_payload() -> dict[str, Any]:
@@ -29,37 +32,72 @@ def workspace_root(payload: dict[str, Any]) -> Path:
     return Path.cwd()
 
 
-def load_runtime(runtime_path: Path) -> dict[str, Any]:
-    """Load .runtime.json or return empty state."""
-    if runtime_path.exists():
-        try:
-            with open(runtime_path, encoding="utf-8") as f:
-                return json.load(f)
-        except (json.JSONDecodeError, OSError):
-            pass
-    return {"pending_tokens": [], "authorized": {}}
+def write_frontmatter_field(path: Path, field_name: str, value: str | None) -> None:
+    """Update or remove a single frontmatter field. Atomic write via tmp+rename."""
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        return
+    second = text.find("\n---\n", 4)
+    if second == -1:
+        return
+    frontmatter = text[4:second]
+    rest = text[second:]  # "\n---\n..." (closing delimiter + body)
+
+    lines = frontmatter.splitlines()
+    new_lines: list[str] = []
+    found = False
+    for line in lines:
+        if ":" in line:
+            key = line.split(":", 1)[0].strip()
+            if key == field_name:
+                found = True
+                if value is not None:
+                    new_lines.append(f"{field_name}: {value}")
+                continue
+        new_lines.append(line)
+
+    if not found and value is not None:
+        new_lines.append(f"{field_name}: {value}")
+
+    updated = "---\n" + "\n".join(new_lines) + rest
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(updated, encoding="utf-8")
+    tmp.rename(path)
 
 
-def save_runtime(runtime_path: Path, data: dict[str, Any]) -> None:
-    """Write .runtime.json atomically."""
-    runtime_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = runtime_path.with_suffix(".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-        f.write("\n")
-    tmp.rename(runtime_path)
+def _now_iso() -> str:
+    return f'"{datetime.now(timezone.utc).isoformat()}"'
+
+
+def _find_first_draft(amendments_dir: Path) -> Path | None:
+    """Find the first draft amendment (.📝) that is not the founding document."""
+    if not amendments_dir.exists():
+        return None
+    for path in sorted(amendments_dir.iterdir()):
+        if path.is_file() and path.suffix == ".📝" and not path.name.startswith(".founding"):
+            return path
+    return None
 
 
 def main() -> int:
     payload = load_payload()
     root = workspace_root(payload)
-    runtime_path = root / ".constitution" / ".runtime.json"
+    subagent_type = payload.get("subagent_type", "")
 
-    # Generate a pending token for this reconciliation subagent
-    token = str(uuid.uuid4())
-    runtime = load_runtime(runtime_path)
-    runtime.setdefault("pending_tokens", []).append(token)
-    save_runtime(runtime_path, runtime)
+    if subagent_type == "codifier":
+        law_path = root / ".constitution" / "LAW.⏳"
+        if law_path.exists():
+            write_frontmatter_field(law_path, "resolution_started_at", _now_iso())
+
+    elif subagent_type == "framer":
+        founding_path = root / ".constitution" / "amendments" / FOUNDING_DRAFT
+        if founding_path.exists():
+            write_frontmatter_field(founding_path, "evaluation_started_at", _now_iso())
+
+    elif subagent_type == "ratifier":
+        draft = _find_first_draft(root / ".constitution" / "amendments")
+        if draft is not None:
+            write_frontmatter_field(draft, "evaluation_started_at", _now_iso())
 
     # Allow the subagent to start
     print(json.dumps({"decision": "allow"}))

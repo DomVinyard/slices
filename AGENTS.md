@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This project builds **opendevshop**, a constitutional planning system and tooling for human-agent coordination.
+This project builds **constitution**, a constitutional planning system and tooling for human-agent coordination.
 
 ## The meta situation
 
@@ -25,7 +25,7 @@ Cursor docs: https://docs.cursor.com
 
 ## Current state
 
-The `.constitution/` directory contains the authoritative log. The `.constitution/amendments/` directory holds the constitutional entries in append-only order (timestamped filenames). The founding document (`.constitution/FOUNDING.✅`) is the axiomatic grundnorm, and derived law lives in `.constitution/LAW.✅`. Constitutional files use emoji suffixes as extensions (no `.md`).
+The `.constitution/` directory contains the authoritative log. The `.constitution/amendments/` directory holds the constitutional entries in append-only order (timestamped filenames). The founding document (`.constitution/amendments/.founding.✅`) is the axiomatic grundnorm, and derived law lives in `.constitution/LAW.✅`. Constitutional files use emoji suffixes as extensions (no `.md`).
 
 Right now this is bootstrap: the tooling doesn't exist yet, so "compilation" and "publishing snapshots" are manual or don't happen. As we build out the system, it will increasingly manage itself.
 
@@ -42,6 +42,8 @@ The constitution skill installs into the workspace via `skill/scripts/providers/
 | Check status           | `python3 skill/scripts/providers/cursor/init.py --status`    | Reports current install state                     |
 
 Use `--link` during development so edits to source files under `skill/` propagate immediately to the installed location. Use `--unlink` to freeze the install into independent copies.
+
+If the user asks to "resync", "relink", or "reinstall" the skill, always force-refresh by piping `r` into the command: `echo "r" | python3 skill/scripts/providers/cursor/init.py --link`.
 
 ## Key distinction for agents
 

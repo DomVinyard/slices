@@ -1,5 +1,6 @@
 ---
-amendments_hash: "48c3777d6bd14c11f7e97b25d0fd934eac609869ae14ebcd24f074557f5ea72a"
+amendments_hash: "a7848deafd69fe4c4a63de269e896ae231c2656adea347b63fea3d9f181e520b"
+last_reconciled_amendment: "20260210002921"
 ---
 
 # Intent
@@ -84,18 +85,33 @@ Accepted amendment content is immutable. Draft amendment content is editable.
 
 ## Founding document
 
-The founding document (`FOUNDING.✅`) is the constitutional grundnorm — the axiomatic presupposition that makes the amendment system intelligible.
+The founding document (`FOUNDING.✅`) is the constitutional grundnorm — the axiomatic presupposition that makes the amendment system intelligible. It is perpetual: it defines the identity of this constitutional order, not merely a rule within it. Amendments supersede earlier amendments; nothing supersedes the founding document. If the founding presuppositions no longer hold, the correct response is a new constitution, not an amendment.
 
 - There is no law before the founding document is accepted. Accepting the founding document triggers initial law creation.
 - The founding document participates in amendments hash computation (`FOUNDING.✅` is included first, before amendments).
-- Once accepted (`FOUNDING.✅`), the founding document is immutable.
 - Founding suitability uses criteria appropriate to a grundnorm (coherence, minimality, grounding, stability) with explicitly higher ambiguity tolerance than amendments.
 - Law derivation SHALL use `FOUNDING.✅` as baseline context before processing amendments.
+
+## Constitutional subagent architecture
+
+Automated constitutional procedures SHALL be executed by named subagents with structurally restricted tool access, not by injected commands in the parent agent context. Tool restrictions are structural enforcement — the subagent literally cannot use tools it is not granted. This is stronger than hook-based denial.
+
+| Subagent     | Role                                           | Permitted tools                                               |
+| ------------ | ---------------------------------------------- | ------------------------------------------------------------- |
+| **Ratifier** | Evaluates and ratifies draft amendments        | Read-only + shell (mutations via scripts)                     |
+| **Framer**   | Evaluates the founding document for acceptance | Read-only + shell (mutations via scripts)                     |
+| **Codifier** | Compiles accepted amendments into derived law  | Read + write + shell (direct file editing for reconciliation) |
+
+The codifier's `subagentStart` hook is the sole gate for LAW write authorization.
+
+## Law as sole compiled source
+
+Law is the compiled operating source for agents. Agents operating under law SHALL read law for guidance, not raw accepted amendments. Reading raw amendments risks re-deriving what law already synthesized — the kind of silent re-interpretation the constitutional system exists to prevent. Amendments are source material for the codifier during reconciliation only.
 
 ## Operational definitions
 
 - **Constitutional acceptance procedure**: running `skill/scripts/promote_article.py` on a draft amendment in `status: review` with matching `apply_ok_at`
-- **Law reconciliation**: executed by a typed custom subagent (`constitutional-reconciler`) whose `subagentStart` hook is the sole gate for LAW write authorization. Content of `LAW.⏳` is aligned with current accepted-amendment truth, then `skill/scripts/sync_article_hash.py` restamps `amendments_hash` and renames to `LAW.✅`. The reconciliation prompt lives in the subagent definition file, not in a separate resource
+- **Law reconciliation**: executed by the codifier subagent, whose `subagentStart` hook is the sole gate for LAW write authorization. Content of `LAW.⏳` is aligned with current accepted-amendment truth, then `skill/scripts/sync_article_hash.py` restamps `amendments_hash` and renames to `LAW.✅`. The reconciliation prompt lives in the subagent definition file, not in a separate resource
 - **Verification**: running `skill/scripts/verify_kernel_hash.py` and requiring `RESULT=PASS`
 
 ## Hash and derivation rules
@@ -112,7 +128,7 @@ The founding document (`FOUNDING.✅`) is the constitutional grundnorm — the a
 
 ## LAW write authorization
 
-LAW files are not directly writable by any agent. Write access requires explicit runtime authorization through the `constitutional-reconciler` subagent gate.
+LAW files are not directly writable by any agent. Write access requires explicit runtime authorization through the codifier subagent gate.
 
 - Authorization is additive (only agents entering through a typed subagent gate) and fail-closed (missing or unreadable `.constitution/.runtime.json` means deny)
 - Token lifecycle: pending (generated on subagent spawn) → claimed (bound to conversation ID on first LAW write) → cleared (after sync or subagent completion)
@@ -132,16 +148,16 @@ LAW files are not directly writable by any agent. Write access requires explicit
 
 ## State transition ownership
 
-| Transition | Script | Trigger |
-| --- | --- | --- |
-| `LAW.✅` -> `LAW.⏳` | `promote_article.py` | Amendment accepted |
-| `LAW.✅` -> `LAW.⏳` | `hook_pre_tool_use.py` | Hash drift detected |
-| `LAW.⏳` -> `LAW.✅` | `sync_article_hash.py` | Reconciliation succeeds |
-| `LAW.*` -> `LAW.❌` | `verify_kernel_hash.py` | Malformed file |
-| `FOUNDING.📝` -> `FOUNDING.⏳` | `apply_founding_result.py` | APPLY_OK |
-| `FOUNDING.⏳` -> `FOUNDING.📝` | `apply_founding_result.py` | NEEDS_INPUT |
-| `FOUNDING.⏳` -> `FOUNDING.✅` | `promote_founding.py` | Evaluation passed |
-| `ts.📝` -> `ts.✅` | `promote_article.py` | Review passed |
+| Transition                     | Script                     | Trigger                 |
+| ------------------------------ | -------------------------- | ----------------------- |
+| `LAW.✅` -> `LAW.⏳`           | `promote_article.py`       | Amendment accepted      |
+| `LAW.✅` -> `LAW.⏳`           | `hook_pre_tool_use.py`     | Hash drift detected     |
+| `LAW.⏳` -> `LAW.✅`           | `sync_article_hash.py`     | Reconciliation succeeds |
+| `LAW.*` -> `LAW.❌`            | `verify_kernel_hash.py`    | Malformed file          |
+| `FOUNDING.📝` -> `FOUNDING.⏳` | `apply_founding_result.py` | APPLY_OK                |
+| `FOUNDING.⏳` -> `FOUNDING.📝` | `apply_founding_result.py` | NEEDS_INPUT             |
+| `FOUNDING.⏳` -> `FOUNDING.✅` | `promote_founding.py`      | Evaluation passed       |
+| `ts.📝` -> `ts.✅`             | `promote_article.py`       | Review passed           |
 
 ## Interaction rules
 

@@ -1,1 +1,0 @@
-../../skill/scripts/providers/cursor/commands/review-law.md

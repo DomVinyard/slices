@@ -1,6 +1,5 @@
 ---
-status: draft
-apply_ok_at: "⏳"
+apply_ok_at: "2ba8432315c84904b884d794f58e7da819c7aa7e4691b7364121f7833c8cef8d"
 ---
 
 This amendment supersedes the filename-state model established in 20260209105816 and refined in 20260209222902.
@@ -35,3 +34,5 @@ State transition table:
 | ⏳ .founding → 📝 .founding | apply_founding_result.py | NEEDS_INPUT          |
 | ⏳ .founding → ✅ .founding | promote_founding.py     | Evaluation passed      |
 | 📝 ts → ✅ ts            | promote_article.py       | Review passed           |
+
+Also the project's name is not opendevshop. It's "Constitution".

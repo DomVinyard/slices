@@ -1,0 +1,1 @@
+../../skill/scripts/providers/cursor/commands/constitution-new-amendment.md

@@ -1,5 +1,5 @@
 ---
-amendments_hash: "59ab5965efb555b3502bd82d13455f346e6565cc68b642732b9757e058dbff86"
+amendments_hash: "48c3777d6bd14c11f7e97b25d0fd934eac609869ae14ebcd24f074557f5ea72a"
 ---
 
 # Intent
@@ -95,7 +95,7 @@ The founding document (`FOUNDING.✅`) is the constitutional grundnorm — the a
 ## Operational definitions
 
 - **Constitutional acceptance procedure**: running `skill/scripts/promote_article.py` on a draft amendment in `status: review` with matching `apply_ok_at`
-- **Law reconciliation**: updating `LAW.⏳` content to align with current accepted-amendment truth, then running `skill/scripts/sync_article_hash.py` to restamp `amendments_hash` and rename to `LAW.✅`
+- **Law reconciliation**: executed by a typed custom subagent (`constitutional-reconciler`) whose `subagentStart` hook is the sole gate for LAW write authorization. Content of `LAW.⏳` is aligned with current accepted-amendment truth, then `skill/scripts/sync_article_hash.py` restamps `amendments_hash` and renames to `LAW.✅`. The reconciliation prompt lives in the subagent definition file, not in a separate resource
 - **Verification**: running `skill/scripts/verify_kernel_hash.py` and requiring `RESULT=PASS`
 
 ## Hash and derivation rules
@@ -110,13 +110,21 @@ The founding document (`FOUNDING.✅`) is the constitutional grundnorm — the a
 - The next iteration SHALL attempt law reconciliation until verification passes
 - Draft-only edits SHALL NOT affect the accepted-amendment hash and SHALL NOT force law reconciliation
 
+## LAW write authorization
+
+LAW files are not directly writable by any agent. Write access requires explicit runtime authorization through the `constitutional-reconciler` subagent gate.
+
+- Authorization is additive (only agents entering through a typed subagent gate) and fail-closed (missing or unreadable `.constitution/.runtime.json` means deny)
+- Token lifecycle: pending (generated on subagent spawn) → claimed (bound to conversation ID on first LAW write) → cleared (after sync or subagent completion)
+- `.constitution/.runtime.json` is ephemeral coordination state — gitignored, deletable without consequence, auto-recreated by hooks. Not constitutional truth; excluded from hash computation and law derivation
+
 ## Filesystem layout
 
 - `.constitution/amendments/` SHALL store constitutional amendments
 - `.constitution/FOUNDING.📝` (or `.⏳` or `.✅`) SHALL store the founding document at the `.constitution/` root
 - `.constitution/LAW.✅` (or `.⏳` or `.❌`) SHALL store derived law at the `.constitution/` root
 - `skill/scripts/` SHALL store constitutional procedures and enforcement scripts
-- `skill/resources/` SHALL store constitutional agent prompts
+- `skill/scripts/providers/<provider>/` SHALL store all runtime-provider-specific artifacts. For Cursor: `skill/scripts/providers/cursor/` containing `hooks.json`, `commands/`, `agents/`, and `init.py`. `init.py` manages installation into the provider's runtime directory (`.cursor/` for Cursor) via copy or symlink
 - Draft amendment records SHALL use filename form `timestamp.📝`
 - Accepted amendment records SHALL use filename form `timestamp.✅`
 - Only accepted amendment records (`*.✅`) and `FOUNDING.✅` SHALL participate in constitutional hash computation

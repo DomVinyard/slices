@@ -24,6 +24,7 @@ from pathlib import Path
 SKILL_INSTALL_NAME = "constitution"
 HOOK_COMMAND_PREFIX = ".cursor/skills/constitution/scripts/"
 COMMAND_PREFIX = "constitution-"
+AGENT_PREFIX = "constitutional-"
 # Known prefixes from previous install locations that should be cleaned up
 OLD_HOOK_PREFIXES = [
     ".constitution/src/scripts/",
@@ -50,12 +51,20 @@ def get_commands_dir(target: Path) -> Path:
     return target / ".cursor" / "commands"
 
 
+def get_agents_dir(target: Path) -> Path:
+    return target / ".cursor" / "agents"
+
+
 def get_hooks_file(target: Path) -> Path:
     return target / ".cursor" / "hooks.json"
 
 
 def get_hooks_template(skill_root: Path) -> Path:
     return skill_root / "scripts" / "providers" / "cursor" / "hooks.json"
+
+
+def get_cursor_provider_dir(skill_root: Path) -> Path:
+    return skill_root / "scripts" / "providers" / "cursor"
 
 
 # ---------------------------------------------------------------------------
@@ -288,7 +297,7 @@ def _is_constitution_command(path: Path) -> bool:
 
 def install_commands_copy(target: Path, skill_root: Path) -> list[str]:
     """Copy command .md files into .cursor/commands/. Returns installed names."""
-    commands_src = skill_root / "commands"
+    commands_src = get_cursor_provider_dir(skill_root) / "commands"
     if not commands_src.exists():
         return []
     commands_dir = get_commands_dir(target)
@@ -311,7 +320,7 @@ def install_commands_copy(target: Path, skill_root: Path) -> list[str]:
 
 def install_commands_link(target: Path, skill_root: Path) -> list[str]:
     """Symlink command .md files into .cursor/commands/. Returns installed names."""
-    commands_src = skill_root / "commands"
+    commands_src = get_cursor_provider_dir(skill_root) / "commands"
     if not commands_src.exists():
         return []
     commands_dir = get_commands_dir(target)
@@ -367,6 +376,95 @@ def remove_commands(target: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Custom agents management
+# ---------------------------------------------------------------------------
+
+def _is_constitution_agent(path: Path) -> bool:
+    """Check if an agent file belongs to the constitution skill by prefix."""
+    return path.name.startswith(AGENT_PREFIX) and path.name.endswith(".md")
+
+
+def install_agents_copy(target: Path, skill_root: Path) -> list[str]:
+    """Copy agent .md files into .cursor/agents/. Returns installed names."""
+    agents_src = get_cursor_provider_dir(skill_root) / "agents"
+    if not agents_src.exists():
+        return []
+    agents_dir = get_agents_dir(target)
+    agents_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove old constitution agents first
+    for existing in agents_dir.iterdir():
+        if _is_constitution_agent(existing):
+            existing.unlink()
+
+    installed: list[str] = []
+    for md_file in sorted(agents_src.glob("*.md")):
+        shutil.copy2(md_file, agents_dir / md_file.name)
+        installed.append(md_file.name)
+
+    if installed:
+        print(f"  Agents: {agents_dir} ({len(installed)} copied)")
+    return installed
+
+
+def install_agents_link(target: Path, skill_root: Path) -> list[str]:
+    """Symlink agent .md files into .cursor/agents/. Returns installed names."""
+    agents_src = get_cursor_provider_dir(skill_root) / "agents"
+    if not agents_src.exists():
+        return []
+    agents_dir = get_agents_dir(target)
+    agents_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove old constitution agents first
+    for existing in agents_dir.iterdir():
+        if _is_constitution_agent(existing):
+            existing.unlink()
+
+    installed: list[str] = []
+    for md_file in sorted(agents_src.glob("*.md")):
+        link_path = agents_dir / md_file.name
+        relative_symlink(md_file, link_path)
+        installed.append(f"{md_file.name} -> (symlink)")
+
+    if installed:
+        print(f"  Agents: {agents_dir} ({len(installed)} linked)")
+    return installed
+
+
+def freeze_agents(target: Path) -> None:
+    """Replace any symlinked agent files with copies."""
+    agents_dir = get_agents_dir(target)
+    if not agents_dir.exists():
+        return
+    frozen = 0
+    for item in agents_dir.iterdir():
+        if _is_constitution_agent(item) and item.is_symlink():
+            resolved = item.resolve()
+            item.unlink()
+            shutil.copy2(resolved, item)
+            frozen += 1
+    if frozen:
+        print(f"  Agents: {frozen} frozen from symlink")
+
+
+def remove_agents(target: Path) -> None:
+    """Remove constitution-prefixed agent files from .cursor/agents/."""
+    agents_dir = get_agents_dir(target)
+    if not agents_dir.exists():
+        return
+    removed = 0
+    for item in agents_dir.iterdir():
+        if _is_constitution_agent(item):
+            item.unlink()
+            removed += 1
+    if removed:
+        print(f"  Removed {removed} agent(s) from {agents_dir}")
+    # Clean up empty agents dir
+    if agents_dir.exists() and not any(agents_dir.iterdir()):
+        agents_dir.rmdir()
+
+
+# ---------------------------------------------------------------------------
 # Install/uninstall commands
 # ---------------------------------------------------------------------------
 
@@ -392,6 +490,7 @@ def cmd_install_copy(skill_root: Path, target: Path) -> int:
     installed = copy_install(skill_root, install_dir)
     install_hooks_copy(target, skill_root)
     cmd_installed = install_commands_copy(target, skill_root)
+    agents_installed = install_agents_copy(target, skill_root)
 
     print(f"\nInstalled (copy) to {install_dir}:")
     for item in installed:
@@ -400,6 +499,10 @@ def cmd_install_copy(skill_root: Path, target: Path) -> int:
         print(f"\nSlash commands installed to {get_commands_dir(target)}:")
         for item in cmd_installed:
             print(f"  /{item.removesuffix('.md')}")
+    if agents_installed:
+        print(f"\nCustom agents installed to {get_agents_dir(target)}:")
+        for item in agents_installed:
+            print(f"  {item}")
     return 0
 
 
@@ -424,6 +527,7 @@ def cmd_install_link(skill_root: Path, target: Path) -> int:
     installed = link_install(skill_root, install_dir)
     install_hooks_link(target, skill_root)
     cmd_installed = install_commands_link(target, skill_root)
+    agents_installed = install_agents_link(target, skill_root)
 
     print(f"\nInstalled (linked) to {install_dir}:")
     for item in installed:
@@ -431,6 +535,10 @@ def cmd_install_link(skill_root: Path, target: Path) -> int:
     if cmd_installed:
         print(f"\nSlash commands installed to {get_commands_dir(target)}:")
         for item in cmd_installed:
+            print(f"  {item}")
+    if agents_installed:
+        print(f"\nCustom agents installed to {get_agents_dir(target)}:")
+        for item in agents_installed:
             print(f"  {item}")
     print(f"\nDev mode: edits to {skill_root} are live.")
     return 0
@@ -465,6 +573,7 @@ def cmd_unlink(skill_root: Path, target: Path) -> int:
 
     freeze_hooks(target)
     freeze_commands(target)
+    freeze_agents(target)
 
     print(f"\nUnlinked and frozen to {install_dir}:")
     for item in installed:
@@ -490,6 +599,7 @@ def cmd_uninstall(skill_root: Path, target: Path) -> int:
 
     remove_hooks(target)
     remove_commands(target)
+    remove_agents(target)
     print("\nUninstalled.")
     return 0
 
@@ -557,6 +667,22 @@ def cmd_status(skill_root: Path, target: Path) -> int:
             print("Commands:    none installed")
     else:
         print("Commands:    no .cursor/commands/ found")
+
+    # Agents state
+    agents_dir = get_agents_dir(target)
+    if agents_dir.exists():
+        agent_files = [f for f in agents_dir.iterdir() if _is_constitution_agent(f)]
+        if agent_files:
+            linked = any(f.is_symlink() for f in agent_files)
+            mode = "linked" if linked else "copied"
+            print(f"Agents:      ({mode})")
+            for f in sorted(agent_files, key=lambda p: p.name):
+                prefix = " -> (symlink)" if f.is_symlink() else ""
+                print(f"  {f.name}{prefix}")
+        else:
+            print("Agents:      none installed")
+    else:
+        print("Agents:      no .cursor/agents/ found")
 
     return 0
 

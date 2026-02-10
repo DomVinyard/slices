@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import hashlib
+import json
 from pathlib import Path
 
 
@@ -151,6 +152,20 @@ def main() -> int:
     print(f"updated: {active_path.relative_to(REPO_ROOT).as_posix()}")
 
     print(f"amendments_hash: {amendment_hash}")
+
+    # Clear runtime authorization state after successful sync
+    runtime_path = CONSTITUTION_DIR / ".runtime.json"
+    if runtime_path.exists():
+        try:
+            data = {"pending_tokens": [], "authorized": {}}
+            tmp = runtime_path.with_suffix(".tmp")
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+                f.write("\n")
+            tmp.rename(runtime_path)
+        except OSError:
+            pass
+
     return 0
 
 

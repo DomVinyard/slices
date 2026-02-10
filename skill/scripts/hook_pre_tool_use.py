@@ -278,9 +278,54 @@ def main() -> int:
         allow()
         return 0
 
-    # --- LAW file guard ---
+    # --- LAW file guard (token-based authorization) ---
     law_targets = [p for p in normalized if is_law_file(p, root)]
     if law_targets:
+        conversation_id = payload.get("conversation_id", "")
+        runtime_path = root / ".constitution" / ".runtime.json"
+
+        # Fail-closed: if no runtime file, deny
+        if not runtime_path.exists():
+            deny(
+                "Constitutional law: LAW files are derived artifacts. No authorization token found (.runtime.json missing)."
+            )
+            return 0
+
+        try:
+            with open(runtime_path, encoding="utf-8") as f:
+                runtime = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            deny(
+                "Constitutional law: LAW files are derived artifacts. Authorization state unreadable."
+            )
+            return 0
+
+        authorized = runtime.get("authorized", {})
+        pending_tokens = runtime.get("pending_tokens", [])
+
+        # Already authorized — allow
+        if conversation_id and conversation_id in authorized:
+            allow()
+            return 0
+
+        # Pending token available — claim it and allow
+        if pending_tokens and conversation_id:
+            token = pending_tokens.pop(0)
+            authorized[conversation_id] = token
+            runtime["authorized"] = authorized
+            runtime["pending_tokens"] = pending_tokens
+            try:
+                tmp = runtime_path.with_suffix(".tmp")
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(runtime, f, indent=2)
+                    f.write("\n")
+                tmp.rename(runtime_path)
+            except OSError:
+                pass
+            allow()
+            return 0
+
+        # No authorization — deny
         deny(
             "Constitutional law: LAW files are derived artifacts managed by constitutional scripts. Direct edits are not permitted."
         )

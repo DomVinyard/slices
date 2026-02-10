@@ -1,1 +1,1 @@
-../../skill/commands/constitution-evaluate-founding.md
+../../skill/scripts/providers/cursor/commands/constitution-evaluate-founding.md

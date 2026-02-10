@@ -95,6 +95,13 @@ def main() -> int:
     repo_root = _find_repo_root()
     amendment_path = normalize_amendment_path(repo_root, args.article)
 
+    # Idempotency: if .✅ already exists, promotion already happened.
+    accepted_path = amendment_path.with_suffix(".✅")
+    if accepted_path.exists():
+        relative = accepted_path.relative_to(repo_root).as_posix()
+        print(f"promoted_amendment={relative}")
+        return 0
+
     if not amendment_path.exists():
         raise FileNotFoundError(f"Amendment not found: {amendment_path}")
     if amendment_path.suffix != ".📝":
@@ -122,8 +129,10 @@ def main() -> int:
         order.remove("status")
     write_map(amendment_path, prefix, body, mapping, order)
 
-    accepted_path = amendment_path.with_suffix(".✅")
     amendment_path.rename(accepted_path)
+    # Post-rename ghost cleanup: if a race recreated .📝, remove it.
+    if amendment_path.exists():
+        amendment_path.unlink()
     relative = accepted_path.relative_to(repo_root).as_posix()
     mark_law_stale(repo_root, relative)
     print(f"promoted_amendment={relative}")

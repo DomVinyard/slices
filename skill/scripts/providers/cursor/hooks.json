@@ -22,6 +22,18 @@
         "command": "python3 .cursor/skills/constitution/scripts/hook_stop_inject_stale_law.py",
         "loop_limit": 1
       }
+    ],
+    "subagentStart": [
+      {
+        "command": "python3 .cursor/skills/constitution/scripts/hook_subagent_start.py",
+        "matcher": "constitutional-reconciler"
+      }
+    ],
+    "subagentStop": [
+      {
+        "command": "python3 .cursor/skills/constitution/scripts/hook_subagent_stop.py",
+        "matcher": "constitutional-reconciler"
+      }
     ]
   }
 }

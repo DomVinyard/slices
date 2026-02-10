@@ -1,0 +1,31 @@
+---
+apply_ok_at: "17b05b78e293e085d4fcece5b9a2319af48129bc4c79b113113f33fb0d813012"
+---
+
+This amendment establishes the LAW write authorization model and consolidates provider-specific artifacts. It refines the filesystem layout rules in amendment 20260209222902 and adds new operational commitments.
+
+LAW write authorization:
+
+- LAW files SHALL NOT be writable by any agent directly. Write access requires explicit runtime authorization.
+- Authorization is additive: only agents that enter through a typed subagent gate are authorized. There is no concept of a "main agent" or identity-based exclusion.
+- Authorization is fail-closed: absence of a valid authorization token means deny. If `.constitution/.runtime.json` is missing or unreadable, LAW writes are denied.
+- The authorization mechanism uses pending tokens (generated when a reconciliation subagent is spawned) and claimed tokens (bound to a conversation ID on first LAW write). Tokens are cleared after successful law sync or when the reconciliation subagent completes.
+
+Custom subagent as reconciliation mechanism:
+
+- Law reconciliation SHALL occur through a typed custom subagent (`constitutional-reconciler`), not through ad-hoc subagent spawning with inline prompts.
+- The `subagentStart` hook for this subagent type is the sole gate for LAW write authorization. The Cursor framework fires this hook — agents cannot fake it.
+- The reconciliation prompt (derivation instructions, workflow, constraints, output contract) SHALL live in the custom subagent definition file, not in a separate resource referenced at spawn time.
+
+Ephemeral runtime state:
+
+- `.constitution/.runtime.json` is ephemeral coordination state for authorization tokens. It is NOT constitutional truth.
+- It is gitignored, may be deleted at any time without consequence, and is automatically recreated by hooks as needed.
+- It SHALL NOT be read or interpreted as part of constitutional meaning, hash computation, or law derivation.
+
+Provider directory consolidation (refines 20260209222902 filesystem layout):
+
+- All runtime-provider-specific artifacts SHALL live under `skill/scripts/providers/<provider>/`. For Cursor: `skill/scripts/providers/cursor/`.
+- The Cursor provider directory SHALL contain: `hooks.json` (hook configuration template), `commands/` (slash command definitions), `agents/` (custom subagent definitions), and `init.py` (installer).
+- `init.py` SHALL manage installation of hooks, commands, and agents into `.cursor/` via copy or symlink operations.
+- This supersedes the prior layout rule placing commands at `skill/commands/`.

@@ -29,6 +29,20 @@ The `.constitution/` directory contains the authoritative log. The `.constitutio
 
 Right now this is bootstrap: the tooling doesn't exist yet, so "compilation" and "publishing snapshots" are manual or don't happen. As we build out the system, it will increasingly manage itself.
 
+## Skill installation
+
+The constitution skill installs into the workspace via `skill/scripts/providers/cursor/init.py`. Source files live under `skill/` and get installed into `.cursor/` (skills, hooks, commands, agents).
+
+| Mode                   | Command                                                      | What it does                                      |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------- |
+| Copy install (default) | `python3 skill/scripts/providers/cursor/init.py`             | Copies skill files into `.cursor/`                |
+| Dev install (linked)   | `python3 skill/scripts/providers/cursor/init.py --link`      | Creates relative symlinks — source edits are live |
+| Freeze                 | `python3 skill/scripts/providers/cursor/init.py --unlink`    | Converts a linked install to copies               |
+| Uninstall              | `python3 skill/scripts/providers/cursor/init.py --uninstall` | Removes skill, hooks, commands, agents            |
+| Check status           | `python3 skill/scripts/providers/cursor/init.py --status`    | Reports current install state                     |
+
+Use `--link` during development so edits to source files under `skill/` propagate immediately to the installed location. Use `--unlink` to freeze the install into independent copies.
+
 ## Key distinction for agents
 
 If you're asked to "add a feature to the planning system" — that's product work. You're changing how the system behaves.

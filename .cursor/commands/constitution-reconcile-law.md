@@ -1,1 +1,1 @@
-../../skill/commands/constitution-reconcile-law.md
+../../skill/scripts/providers/cursor/commands/constitution-reconcile-law.md

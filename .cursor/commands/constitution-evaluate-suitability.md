@@ -1,1 +1,1 @@
-../../skill/commands/constitution-evaluate-suitability.md
+../../skill/scripts/providers/cursor/commands/constitution-evaluate-suitability.md

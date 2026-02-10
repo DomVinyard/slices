@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-import hashlib
 import json
-import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -62,22 +60,6 @@ def is_draft_amendment(path: Path, root: Path) -> bool:
     return relative.startswith(".constitution/amendments/") and path.suffix == ".📝"
 
 
-def body_hash(body: str) -> str:
-    return hashlib.sha256(body.strip().encode("utf-8")).hexdigest()
-
-
-def run_promotion(root: Path, amendment_path: Path) -> None:
-    promote_script = Path(__file__).resolve().parent / "promote_article.py"
-    if not promote_script.exists():
-        return
-    subprocess.run(
-        ["python3", str(promote_script), "--article", str(amendment_path)],
-        cwd=str(root),
-        capture_output=True,
-        text=True,
-    )
-
-
 def main() -> int:
     payload = load_payload()
     roots = payload.get("workspace_roots") or []
@@ -93,6 +75,9 @@ def main() -> int:
         return 0
     if not is_draft_amendment(file_path, root):
         return 0
+    # Guard: if a .✅ sibling exists, this .📝 is a ghost — skip.
+    if file_path.with_suffix(".✅").exists():
+        return 0
 
     text = file_path.read_text(encoding="utf-8")
     prefix, frontmatter, body = parse_frontmatter(text)
@@ -100,21 +85,9 @@ def main() -> int:
         return 0
     mapping, order = parse_map(frontmatter)
     status = mapping.get("status", "").strip('"').strip("'").lower()
-    if status == "draft":
+    if status in ("draft", "review"):
         mapping["apply_ok_at"] = '"⏳"'
         write_map(file_path, prefix, body, mapping, order)
-        return 0
-
-    if status == "review":
-        current_hash = body_hash(body)
-        apply_ok_at = mapping.get("apply_ok_at", "").strip('"').strip("'")
-        if apply_ok_at == current_hash:
-            run_promotion(root, file_path)
-            return 0
-        mapping["apply_ok_at"] = '"⏳"'
-        write_map(file_path, prefix, body, mapping, order)
-        return 0
-
     return 0
 
 

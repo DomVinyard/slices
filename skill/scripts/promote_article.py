@@ -4,6 +4,13 @@ import argparse
 import hashlib
 from pathlib import Path
 
+from constitutional_paths import (
+    base_name,
+    make_name,
+    parse_state_emoji,
+    swap_state,
+)
+
 
 def _find_repo_root() -> Path:
     """Walk up from script location to find repo root (contains .constitution/)."""
@@ -58,9 +65,9 @@ def normalized_body_hash(body: str) -> str:
 
 
 def mark_law_stale(repo_root: Path, accepted_amendment_relative: str) -> None:
-    """Rename LAW.✅ to LAW.⏳ and update stale metadata in frontmatter."""
+    """Rename ✅ LAW to ⏳ LAW and update stale metadata in frontmatter."""
     constitution_dir = repo_root / ".constitution"
-    active_law = constitution_dir / "LAW.✅"
+    active_law = constitution_dir / make_name("✅", "LAW")
     if not active_law.exists():
         return
     text = active_law.read_text(encoding="utf-8")
@@ -77,7 +84,7 @@ def mark_law_stale(repo_root: Path, accepted_amendment_relative: str) -> None:
         order.remove("status")
     write_map(active_law, prefix, body, mapping, order)
     # Deterministic rename: active -> resolving
-    resolving_law = constitution_dir / "LAW.⏳"
+    resolving_law = constitution_dir / make_name("⏳", "LAW")
     active_law.rename(resolving_law)
 
 
@@ -93,8 +100,8 @@ def main() -> int:
     repo_root = _find_repo_root()
     amendment_path = normalize_amendment_path(repo_root, args.article)
 
-    # Idempotency: if .✅ already exists, promotion already happened.
-    accepted_path = amendment_path.with_suffix(".✅")
+    # Idempotency: if ✅ sibling already exists, promotion already happened.
+    accepted_path = swap_state(amendment_path, "✅")
     if accepted_path.exists():
         relative = accepted_path.relative_to(repo_root).as_posix()
         print(f"promoted_amendment={relative}")
@@ -102,8 +109,8 @@ def main() -> int:
 
     if not amendment_path.exists():
         raise FileNotFoundError(f"Amendment not found: {amendment_path}")
-    if amendment_path.suffix != ".📝":
-        raise ValueError("Promotion requires a draft amendment with .📝 suffix")
+    if parse_state_emoji(amendment_path) != "📝":
+        raise ValueError("Promotion requires a draft amendment with 📝 prefix")
 
     text = amendment_path.read_text(encoding="utf-8")
     prefix, frontmatter, body = parse_frontmatter(text)
@@ -129,7 +136,7 @@ def main() -> int:
     write_map(amendment_path, prefix, body, mapping, order)
 
     amendment_path.rename(accepted_path)
-    # Post-rename ghost cleanup: if a race recreated .📝, remove it.
+    # Post-rename ghost cleanup: if a race recreated 📝, remove it.
     if amendment_path.exists():
         amendment_path.unlink()
     relative = accepted_path.relative_to(repo_root).as_posix()

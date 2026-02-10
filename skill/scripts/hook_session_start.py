@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from constitutional_paths import discover_law
+
 
 def load_payload() -> dict[str, Any]:
     try:
@@ -19,16 +21,6 @@ def workspace_root(payload: dict[str, Any]) -> Path:
     if roots:
         return Path(roots[0])
     return Path.cwd()
-
-
-def discover_law(root: Path) -> tuple[Path, str] | None:
-    """Returns (path, state) or None. States: active, recompiling, corrupted."""
-    constitution_dir = root / ".constitution"
-    for state, suffix in [("active", ".✅"), ("recompiling", ".⏳"), ("corrupted", ".❌")]:
-        p = constitution_dir / f"LAW{suffix}"
-        if p.exists():
-            return p, state
-    return None
 
 
 def extract_body(text: str) -> str:

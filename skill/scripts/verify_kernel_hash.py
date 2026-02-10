@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
-import hashlib
 import json
 from pathlib import Path
 
-
-VALID_SUFFIXES = {".✅", ".⏳", ".📝", ".❌"}
+from constitutional_paths import (
+    compute_amendments_hash,
+    discover_law,
+    make_name,
+)
 
 
 def _find_repo_root() -> Path:
@@ -21,71 +23,6 @@ def _find_repo_root() -> Path:
 REPO_ROOT = _find_repo_root()
 CONSTITUTION_DIR = REPO_ROOT / ".constitution"
 AMENDMENTS_DIR = CONSTITUTION_DIR / "amendments"
-
-
-def discover_law() -> tuple[Path, str]:
-    """Returns (path, state). States: active, resolving, corrupted."""
-    for state, suffix in [("active", ".✅"), ("resolving", ".⏳"), ("corrupted", ".❌")]:
-        p = CONSTITUTION_DIR / f"LAW{suffix}"
-        if p.exists():
-            return p, state
-    raise FileNotFoundError("No LAW file found.")
-
-
-def discover_founding() -> tuple[Path, str] | None:
-    """Returns (path, state) or None. States: founding, review, draft."""
-    for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = AMENDMENTS_DIR / f".founding{suffix}"
-        if p.exists():
-            return p, state
-    return None
-
-
-def list_constitutional_files(directory: Path) -> list[Path]:
-    return sorted(
-        path
-        for path in directory.iterdir()
-        if path.is_file() and path.suffix in VALID_SUFFIXES
-        and not path.name.startswith(".founding")
-    )
-
-
-def list_accepted_amendments(directory: Path) -> list[Path]:
-    return sorted(
-        path
-        for path in list_constitutional_files(directory)
-        if path.suffix == ".✅"
-    )
-
-
-def extract_body_without_frontmatter(text: str) -> str:
-    if text.startswith("---\n"):
-        second_delimiter = text.find("\n---\n", 4)
-        if second_delimiter != -1:
-            text = text[second_delimiter + 5 :]
-    return text.strip()
-
-
-def compute_amendments_hash() -> str:
-    digest = hashlib.sha256()
-    # Include founding document first (if accepted)
-    founding = discover_founding()
-    if founding is not None:
-        founding_path, founding_state = founding
-        if founding_state == "founding":
-            relative = founding_path.relative_to(REPO_ROOT).as_posix()
-            content = extract_body_without_frontmatter(founding_path.read_text(encoding="utf-8"))
-            digest.update(f"FILE:{relative}\n".encode("utf-8"))
-            digest.update(content.encode("utf-8"))
-            digest.update(b"\n\x1e\n")
-    # Then accepted amendments
-    for path in list_accepted_amendments(AMENDMENTS_DIR):
-        relative = path.relative_to(REPO_ROOT).as_posix()
-        content = extract_body_without_frontmatter(path.read_text(encoding="utf-8"))
-        digest.update(f"FILE:{relative}\n".encode("utf-8"))
-        digest.update(content.encode("utf-8"))
-        digest.update(b"\n\x1e\n")
-    return digest.hexdigest()
 
 
 def read_frontmatter(path: Path) -> dict[str, str]:
@@ -107,15 +44,15 @@ def read_frontmatter(path: Path) -> dict[str, str]:
 
 
 def main() -> int:
-    try:
-        law_path, law_state = discover_law()
-    except FileNotFoundError:
+    result = discover_law(REPO_ROOT)
+    if result is None:
         print("DIAGNOSTIC={\"code\":\"LAW_NOT_FOUND\"}")
         print("FAIL  No LAW file found")
         print("RESULT=FAIL")
         return 1
 
-    current_hash = compute_amendments_hash()
+    law_path, law_state = result
+    current_hash = compute_amendments_hash(REPO_ROOT)
     print(f"current_amendments_hash={current_hash}")
 
     relative = law_path.relative_to(REPO_ROOT).as_posix()
@@ -147,10 +84,10 @@ def main() -> int:
         data = read_frontmatter(law_path)
     except Exception:
         # Malformed file — rename to corrupted
-        corrupted_path = CONSTITUTION_DIR / "LAW.❌"
+        corrupted_path = CONSTITUTION_DIR / make_name("❌", "LAW")
         law_path.rename(corrupted_path)
         print(f"DIAGNOSTIC={{\"code\":\"LAW_CORRUPTED\",\"path\":\"{relative}\",\"reason\":\"malformed_frontmatter\"}}")
-        print(f"FAIL  {relative}  renamed to LAW.❌ (malformed)")
+        print(f"FAIL  {relative}  renamed to ❌ LAW (malformed)")
         print("RESULT=FAIL")
         return 1
 

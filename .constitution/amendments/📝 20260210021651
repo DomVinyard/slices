@@ -1,0 +1,37 @@
+---
+status: draft
+apply_ok_at: "⏳"
+---
+
+This amendment supersedes the filename-state model established in 20260209105816 and refined in 20260209222902.
+
+Constitutional files encode state as an emoji prefix on the filename, not as a file extension suffix.
+
+The filename format is: {emoji} {base_name}
+
+Where {emoji} is one of ✅, ⏳, 📝, ❌ and {base_name} is the file's identity (e.g. LAW, .founding, or a timestamp).
+
+Specific filename forms:
+
+(a) Amendments: 📝 {timestamp} (draft), ✅ {timestamp} (accepted).
+(b) Founding document: 📝 .founding (draft), ⏳ .founding (under review), ✅ .founding (accepted grundnorm).
+(c) Law: ✅ LAW (active), ⏳ LAW (resolving), ❌ LAW (corrupted).
+
+State transitions remain deterministic Path.rename() calls in scripts. The base name is preserved across transitions; only the emoji prefix changes.
+
+Draft amendment records use filename form 📝 {timestamp}. Accepted amendment records use filename form ✅ {timestamp}. Only accepted amendment records (✅ {timestamp}) and ✅ .founding participate in constitutional hash computation.
+
+The founding document is stored in .constitution/amendments/ as ✅ .founding (or ⏳ or 📝 variant). Law is stored in .constitution/ as ✅ LAW (or ⏳ or ❌ variant).
+
+State transition table:
+
+| Transition              | Script                   | Trigger                 |
+| ----------------------- | ------------------------ | ----------------------- |
+| ✅ LAW → ⏳ LAW          | promote_article.py       | Amendment accepted      |
+| ✅ LAW → ⏳ LAW          | hook_pre_tool_use.py     | Hash drift detected     |
+| ⏳ LAW → ✅ LAW          | sync_article_hash.py     | Reconciliation succeeds |
+| * LAW → ❌ LAW           | verify_kernel_hash.py    | Malformed file          |
+| 📝 .founding → ⏳ .founding | apply_founding_result.py | APPLY_OK             |
+| ⏳ .founding → 📝 .founding | apply_founding_result.py | NEEDS_INPUT          |
+| ⏳ .founding → ✅ .founding | promote_founding.py     | Evaluation passed      |
+| 📝 ts → ✅ ts            | promote_article.py       | Review passed           |

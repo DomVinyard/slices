@@ -14,7 +14,7 @@ For each amendment in `.constitution/amendments/` with `status: review`:
 
 ### 1. Read current law
 
-Read `.constitution/LAW.✅` (or `LAW.⏳` if resolving). This is the compiled state — all prior amendments are already in it. The amendment you are evaluating is a delta against LAW, not against the amendment history.
+Read `.constitution/✅ LAW` (or `⏳ LAW` if resolving). This is the compiled state — all prior amendments are already in it. The amendment you are evaluating is a delta against LAW, not against the amendment history.
 
 ### 2. Evaluate
 
@@ -37,7 +37,7 @@ Assess:
   `python3 .cursor/skills/constitution/scripts/apply_suitability_result.py --article "<amendment_path>" --result APPLY_OK`
 - Promote the amendment:
   `python3 .cursor/skills/constitution/scripts/promote_article.py --article "<amendment_path>"`
-  (renames `timestamp.📝` to `timestamp.✅`, marks law as resolving)
+  (renames `📝 timestamp` to `✅ timestamp`, marks law as resolving)
 - Report the result to the user in this exact format:
   - A few bullet points describing what the amendment commits to and how it will change law
   - Then on its own line: `✅ AMENDMENT RATIFIED`

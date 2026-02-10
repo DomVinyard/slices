@@ -25,7 +25,7 @@ Cursor docs: https://docs.cursor.com
 
 ## Current state
 
-The `.constitution/` directory contains the authoritative log. The `.constitution/amendments/` directory holds the constitutional entries in append-only order (timestamped filenames). The founding document (`.constitution/amendments/.founding.✅`) is the axiomatic grundnorm, and derived law lives in `.constitution/LAW.✅`. Constitutional files use emoji suffixes as extensions (no `.md`).
+The `.constitution/` directory contains the authoritative log. The `.constitution/amendments/` directory holds the constitutional entries in append-only order (timestamped filenames). The founding document (`.constitution/amendments/✅ .founding`) is the axiomatic grundnorm, and derived law lives in `.constitution/✅ LAW`. Constitutional files use emoji prefixes to encode state (e.g. `✅ LAW`, `📝 20260209101538`).
 
 Right now this is bootstrap: the tooling doesn't exist yet, so "compilation" and "publishing snapshots" are manual or don't happen. As we build out the system, it will increasingly manage itself.
 

@@ -1,0 +1,80 @@
+---
+apply_ok_at: "14312baf091b94927d6190e2c3947c25eb6d30e7d3db14d38044a6689ba6ff9f"
+---
+
+# Narrow law to operational ground truth
+
+This amendment supersedes the sections of current law that describe unimplemented architecture as though it were operational. Specifically: the six-layer model, snapshot-based integrity rule, snapshot-dependent success criteria, the v0 agent interaction contract referencing snapshot paths, and the contract file/promotion tooling description. It preserves the conceptual commitments (ambiguity as first-class state, deterministic derivation, append-only truth) while removing claims about infrastructure that does not exist.
+
+The amendment lifecycle, founding document, subagent architecture, LAW write authorization, filesystem layout, state transition ownership, hash/derivation rules, law freshness rules, enforcement machinery, and interaction rules are unaffected.
+
+## Revised core rules
+
+The core rules currently include "Snapshots are immutable: changes happen by publishing a new snapshot, not by mutating the current one" and "Compiled artifacts are stamped with what they were compiled from (cursor + hashes + snapshot path)." These reference infrastructure that does not exist.
+
+The core rules SHALL be:
+
+1. Truth only changes by appending entries (or promoting submitted contracts into entries).
+2. Entries are applied in order.
+3. Compiled artifacts are stamped with what they were compiled from (amendment hashes and reconciliation metadata).
+4. No guessing: if the system cannot infer a safe change, it emits an explicit request for missing information rather than guessing.
+
+Rule 5 (snapshot immutability) is removed. When snapshots become operational, a future amendment will reintroduce snapshot semantics.
+
+## Revised integrity rule
+
+The current integrity rule references "safely applied into a new published snapshot." There is no publish step and no snapshots.
+
+The integrity rule SHALL be: if the constitutional hash of accepted amendments does not match the hash recorded in law, then law is stale and reconciliation is required before agents may treat law as authoritative. The system enforces this mechanically via hash drift detection and the `LAW.✅` to `LAW.⏳` transition.
+
+## Revised success criteria
+
+The current success criteria reference "published snapshot yields the same READY set" and "deterministic at the view layer." There are no READY sets, no views, and no snapshots.
+
+The system is successful if it can:
+
+- **Maintain law integrity**: accepting an amendment triggers reconciliation, and reconciliation produces law that verifiably incorporates all accepted amendments.
+- **Enforce honestly**: the enforcement machinery (hooks, guards, structurally restricted subagents) prevents unauthorized mutation of constitutional truth without relying on agent compliance.
+- **Surface ambiguity explicitly**: when the system cannot safely proceed, it says so rather than guessing. Draft amendments with unresolved issues are not promoted.
+- **Stay deterministic**: the same set of accepted amendments, processed in order against the same founding document, produces the same law content.
+
+When task selection, READY views, and snapshot publication become operational, success criteria will expand via future amendments.
+
+## Revised layers
+
+The current law lists six layers (constitutional log, workbench memos, kernel view, tasks, views, snapshots). Only two are operational.
+
+The operational layers are:
+
+### Authoritative (durable, append-only)
+
+1. **Constitutional log**: the founding document and ordered amendments. This is the constitution.
+
+### Derived (disposable, regeneratable)
+
+2. **Law**: the compiled operating source for agents, derived from the constitutional log by the codifier. Stamped with amendment hashes for integrity verification.
+
+Future layers (workbench memos, tasks, views, snapshots) are anticipated by the original vision but are not currently operational. They SHALL NOT be described in law as current architecture. When implemented, each will be introduced by its own amendment.
+
+## Revised agent interaction model
+
+The current law describes a v0 interaction contract: "APPLY_OK: new cursor + snapshot path + snapshot hash" or "NEEDS_INPUT: one contract path." This references snapshots and contract file infrastructure that do not exist.
+
+The current agent interaction model is:
+
+- Agents operate under law. Law is the sole compiled source of operational guidance.
+- When agents identify decisions that should become constitutional truth, they draft amendments (`.📝` files).
+- The constitutional lifecycle (review, ratification, acceptance, reconciliation) handles promotion into law.
+- When agents cannot safely proceed due to missing information, they surface the ambiguity explicitly rather than guessing.
+
+A formalized interaction contract (with typed outcomes and contract file tooling) will be reintroduced by a future amendment when the supporting infrastructure exists.
+
+## Revised contract description
+
+The current law describes contracts as files with a promotion workflow, reviewer agents, and typed expectations. The conceptual commitment to ambiguity-as-first-class-state is sound. The description of contract file tooling is not operational.
+
+Contracts, as a concept, remain a constitutional commitment: when the system cannot safely proceed, it must request missing information explicitly rather than guessing. The mechanism for this is currently informal (agents surface ambiguity in conversation or in draft amendment text). When formal contract tooling (typed contract files, submission workflow, promotion into the log) becomes operational, it will be codified by a future amendment.
+
+## Staleness and stamps
+
+The current law's description of staleness ("when upstream meaning changes, affected compiled regions are treated as stale") and stamps ("semantic hashing is computed from the body alone") remain accurate for the one compiled artifact that exists (law). These sections are retained as-is, with the understanding that they currently apply only to law and will generalize to additional compiled artifacts when those artifacts exist.

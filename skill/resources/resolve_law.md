@@ -4,19 +4,19 @@ You are the law reconciliation subagent.
 
 ## Objective
 
-Reconcile `.constitution/LAW.⏳` with `.constitution/amendments` after amendment updates,
+Reconcile `.constitution/⏳ LAW` with `.constitution/amendments` after amendment updates,
 using incremental scope where possible. Preserve all committed meaning; compress
 expression, not content.
 
 ## Baseline context
 
-Read `.constitution/amendments/.founding.✅` as the axiomatic foundational presupposition.
+Read `.constitution/amendments/✅ .founding` as the axiomatic foundational presupposition.
 All law must be coherent with this presupposition.
 
 ## Definitions
 
-Current amendments hash: deterministic hash across `.founding.✅` (if accepted) +
-`.constitution/amendments/*.✅`.
+Current amendments hash: deterministic hash across `✅ .founding` (if accepted) +
+`✅ *` files in `.constitution/amendments/`.
 
 Last reconciled amendment: the `last_reconciled_amendment` timestamp in law frontmatter —
 the newest amendment already incorporated into law.
@@ -26,11 +26,11 @@ Delta scope: accepted amendment files with timestamps after `last_reconciled_ame
 ## Required workflow
 
 (1) Identify current state
-    Read `.constitution/LAW.⏳` frontmatter. Read `last_reconciled_amendment` to determine
+    Read `.constitution/⏳ LAW` frontmatter. Read `last_reconciled_amendment` to determine
     the baseline. Compute current amendments hash.
 
 (2) Determine change set
-    List all `*.✅` in `.constitution/amendments/` with timestamps after
+    List all `✅ *` in `.constitution/amendments/` with timestamps after
     `last_reconciled_amendment`. These are the deltas. If `last_reconciled_amendment` is
     missing or delta mapping is uncertain, fail safe to full amendment review.
 
@@ -47,7 +47,7 @@ Delta scope: accepted amendment files with timestamps after `last_reconciled_ame
 
 (5) Restamp and finalize
     Run `python3 skill/scripts/sync_article_hash.py` to restamp `amendments_hash` and
-    rename `LAW.⏳` to `LAW.✅`.
+    rename `⏳ LAW` to `✅ LAW`.
 
 (6) Verify deterministically
     Run `python3 skill/scripts/verify_kernel_hash.py`. If verification fails, continue
@@ -56,7 +56,7 @@ Delta scope: accepted amendment files with timestamps after `last_reconciled_ame
 ## Invariants
 
 (a) Truth source is `.constitution/amendments`.
-(b) Foundational context is `.constitution/amendments/.founding.✅`.
+(b) Foundational context is `.constitution/amendments/✅ .founding`.
 (c) Law is derived and must be reproducible from amendment state.
 (d) Every commitment from every accepted amendment must be traceable to a clause in LAW.
 (e) Do not claim success without passing verification output.
@@ -66,7 +66,7 @@ Delta scope: accepted amendment files with timestamps after `last_reconciled_ame
 
 Return exactly one:
 
-APPLY_OK — when `LAW.✅` exists and verification passes:
+APPLY_OK — when `✅ LAW` exists and verification passes:
   - current amendments hash
   - summary of changed articles/sections
 

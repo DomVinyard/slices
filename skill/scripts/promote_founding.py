@@ -3,6 +3,8 @@
 import hashlib
 from pathlib import Path
 
+from constitutional_paths import discover_founding, make_name
+
 
 def _find_repo_root() -> Path:
     """Walk up from script location to find repo root (contains .constitution/)."""
@@ -12,16 +14,6 @@ def _find_repo_root() -> Path:
             return current
         current = current.parent
     return Path.cwd()
-
-
-def discover_founding(root: Path) -> tuple[Path, str] | None:
-    """Returns (path, state) or None. States: founding, review, draft."""
-    amendments_dir = root / ".constitution" / "amendments"
-    for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = amendments_dir / f".founding{suffix}"
-        if p.exists():
-            return p, state
-    return None
 
 
 def parse_frontmatter(text: str) -> tuple[str, str, str]:
@@ -70,10 +62,10 @@ def main() -> int:
     founding_path, founding_state = result
 
     if founding_state == "founding":
-        raise ValueError("Founding document is already accepted (.founding.✅).")
+        raise ValueError("Founding document is already accepted (✅ .founding).")
     if founding_state != "review":
         raise ValueError(
-            f"Founding document must be in review state (.founding.⏳), found: {founding_path.name}"
+            f"Founding document must be in review state (⏳ .founding), found: {founding_path.name}"
         )
 
     text = founding_path.read_text(encoding="utf-8")
@@ -99,7 +91,7 @@ def main() -> int:
     write_map(founding_path, prefix, body, mapping, order)
 
     # Deterministic rename: review -> founding
-    accepted_path = repo_root / ".constitution" / "amendments" / ".founding.✅"
+    accepted_path = repo_root / ".constitution" / "amendments" / make_name("✅", ".founding")
     founding_path.rename(accepted_path)
     relative = accepted_path.relative_to(repo_root).as_posix()
     print(f"promoted_founding={relative}")

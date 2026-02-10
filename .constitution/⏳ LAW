@@ -1,0 +1,320 @@
+---
+amendments_hash: "24a0525dc7d9f036dcdf070a5e28d2f88b51c60ba0ba2f1bf63adff4620935f2"
+last_reconciled_amendment: "20260210015136"
+stale_reason: amendments_drift_detected
+resolution_started_at: "2026-02-10T02:21:56.177066+00:00"
+---
+
+Article I -- Intent
+
+Section 1. Purpose
+
+opendevshop is a painfully simple, file-first project planner designed for
+humans and agents to coordinate work without turning planning into a chat log
+or turning the workspace into mush.
+
+Section 2. Core Bet
+
+Planning becomes reliable for agents when:
+
+(a) Intent, decisions, coordination structure, and actionables are separated
+    into distinct layers.
+(b) Ambiguity and staleness are explicit states rather than implicit failure
+    modes.
+
+Section 3. What This Is
+
+An experiment in building a small, durable context network for one use case
+(project planning) that stays usable when agents are overloaded, have
+conflicting installed knowledge, or are operating near context-window limits.
+
+Section 4. Success Criteria
+
+The system is successful if it can:
+
+(a) Maintain law integrity: accepting an amendment triggers reconciliation, and
+    reconciliation produces law that verifiably incorporates all accepted
+    amendments.
+(b) Enforce honestly: the enforcement machinery (hooks, guards, structurally
+    restricted subagents) prevents unauthorized mutation of constitutional truth
+    without relying on agent compliance.
+(c) Surface ambiguity explicitly: when the system cannot safely proceed, it says
+    so rather than guessing. Draft amendments with unresolved issues are not
+    promoted.
+(d) Stay deterministic: the same set of accepted amendments, processed in order
+    against the same founding document, produces the same law content.
+
+When task selection, READY views, and snapshot publication become operational,
+success criteria will expand via future amendments.
+
+Section 5. Constraints
+
+(a) Painfully simple: files, minimal moving parts, minimal hidden state.
+(b) Diffable and reviewable: authoritative truth is append-only.
+(c) No background watchers required; prefer explicit/on-demand apply and
+    publish.
+(d) Avoid relying on "agent persuasion" as the primary reliability strategy.
+
+Section 6. Non-Goals
+
+(a) Not a full Jira/Linear replacement.
+(b) Not a general-purpose knowledge graph.
+(c) Not an attempt to standardize a global ontology.
+(d) Not a guarantee of correct reasoning — this is about reducing ambiguity,
+    drift, and silent contradiction in the planning substrate.
+
+
+Article II -- Physics
+
+Section 1. Core Rules
+
+(a) Truth only changes by appending entries (or promoting submitted contracts
+    into entries).
+(b) Entries are applied in order.
+(c) Compiled artifacts are stamped with what they were compiled from (amendment
+    hashes and reconciliation metadata).
+(d) No guessing: if the system cannot infer a safe change, it emits an explicit
+    request for missing information rather than guessing.
+
+Section 2. Integrity Rule
+
+If the constitutional hash of accepted amendments does not match the hash
+recorded in law, then law is stale and reconciliation is required before agents
+may treat law as authoritative. The system enforces this mechanically via hash
+drift detection and the ✅ LAW to ⏳ LAW transition.
+
+Section 3. Filename-State Model
+
+All constitutional files encode state in their filename suffix (emoji only, no
+.md). State transitions are deterministic Path.rename() calls in scripts — no
+agent-driven renames.
+
+(a) Amendments: timestamp.📝 (draft), timestamp.✅ (accepted).
+(b) Founding document: FOUNDING.📝 (draft), FOUNDING.⏳ (under review),
+    FOUNDING.✅ (accepted grundnorm).
+(c) Law: LAW.✅ (active), LAW.⏳ (resolving), LAW.❌ (corrupted).
+
+Section 4. Staleness
+
+Staleness is computed, not manually maintained. When upstream meaning changes,
+affected compiled regions are treated as stale until reconciliation produces
+updated derived artifacts. Currently this applies only to law; it will
+generalize to additional compiled artifacts when those artifacts exist.
+
+Section 5. Stamps
+
+Every file is conceptually split into:
+
+(a) A portable markdown body (meaning).
+(b) A metadata envelope for indexing, linking, routing, and bookkeeping.
+
+Semantic hashing is computed from the body alone. Meaning must live in the body
+to participate in invalidation and provenance.
+
+
+Article III -- Constitutional Lifecycle
+
+Section 1. Amendment States
+
+Constitutional amendments use two active states:
+
+(a) Draft amendments use filename state .📝 and are editable working material.
+(b) Accepted amendments use filename state .✅ and are immutable constitutional
+    truth.
+
+Accepted amendment content is immutable. Draft amendment content is editable.
+
+Section 2. Promotion Rules
+
+(a) A draft amendment may be edited and set to status: review.
+(b) A draft amendment shall not be manually set to accepted state.
+(c) Acceptance is performed only through the constitutional acceptance
+    procedure.
+(d) On acceptance, the amendment is promoted to .✅.
+
+Section 3. Founding Document
+
+The founding document (FOUNDING.✅) is the constitutional grundnorm — the
+axiomatic presupposition that makes the amendment system intelligible. It is
+perpetual: it defines the identity of this constitutional order, not merely a
+rule within it. Amendments supersede earlier amendments; nothing supersedes the
+founding document. If the founding presuppositions no longer hold, the correct
+response is a new constitution, not an amendment.
+
+(a) There is no law before the founding document is accepted. Accepting the
+    founding document triggers initial law creation.
+(b) The founding document participates in amendments hash computation
+    (FOUNDING.✅ is included first, before amendments).
+(c) Founding suitability uses criteria appropriate to a grundnorm (coherence,
+    minimality, grounding, stability) with explicitly higher ambiguity tolerance
+    than amendments.
+(d) Law derivation uses FOUNDING.✅ as baseline context before processing
+    amendments.
+
+
+Article IV -- Subagent Architecture
+
+Section 1. Structural Enforcement
+
+Automated constitutional procedures are executed by named subagents with
+structurally restricted tool access, not by injected commands in the parent
+agent context. Tool restrictions are structural enforcement — the subagent
+literally cannot use tools it is not granted. This is stronger than hook-based
+denial.
+
+| Subagent  | Role                                          | Permitted tools                                              |
+| --------- | --------------------------------------------- | ------------------------------------------------------------ |
+| Ratifier  | Evaluates and ratifies draft amendments       | Read-only + shell (mutations via scripts)                    |
+| Framer    | Evaluates the founding document for acceptance| Read-only + shell (mutations via scripts)                    |
+| Codifier  | Compiles accepted amendments into derived law | Read + write + shell (direct file editing for reconciliation)|
+
+Section 2. Law as Sole Compiled Source
+
+Law is the compiled operating source for agents. Agents operating under law
+read law for guidance, not raw accepted amendments. Reading raw amendments risks
+re-deriving what law already synthesized — the kind of silent re-interpretation
+the constitutional system exists to prevent. Amendments are source material for
+the codifier during reconciliation only.
+
+Section 3. LAW Write Authorization
+
+LAW files are not directly writable by any agent. Write access requires explicit
+runtime authorization through the codifier subagent gate.
+
+(a) The codifier's subagentStart hook is the sole gate for LAW write
+    authorization.
+(b) Authorization is additive (only agents entering through a typed subagent
+    gate) and fail-closed (missing or unreadable .constitution/.runtime.json
+    means deny).
+(c) Token lifecycle: pending (generated on subagent spawn) → claimed (bound to
+    conversation ID on first LAW write) → cleared (after sync or subagent
+    completion).
+(d) .constitution/.runtime.json is ephemeral coordination state — gitignored,
+    deletable without consequence, auto-recreated by hooks. Not constitutional
+    truth; excluded from hash computation and law derivation.
+
+
+Article V -- Operational Definitions and Derivation
+
+Section 1. Procedures
+
+(a) Constitutional acceptance procedure: running
+    skill/scripts/promote_article.py on a draft amendment in status: review with
+    matching apply_ok_at.
+(b) Law reconciliation: executed by the codifier subagent, whose subagentStart
+    hook is the sole gate for LAW write authorization. Content of LAW.⏳ is
+    aligned with current accepted-amendment truth, then
+    skill/scripts/sync_article_hash.py restamps amendments_hash and renames to
+    LAW.✅. The reconciliation prompt lives in the subagent definition file, not
+    in a separate resource.
+(c) Verification: running skill/scripts/verify_kernel_hash.py and requiring
+    RESULT=PASS.
+
+Section 2. Hash and Derivation Rules
+
+(a) Constitutional hash is computed from FOUNDING.✅ (first, if it exists)
+    followed by accepted amendments (*.✅ in .constitution/amendments/).
+(b) Amendment frontmatter is excluded from hash input.
+(c) Hash input is the trimmed markdown body.
+
+Section 3. Law Freshness Rules
+
+(a) Accepting an amendment marks law resolving (LAW.✅ → LAW.⏳).
+(b) The next iteration attempts law reconciliation until verification passes.
+(c) Draft-only edits do not affect the accepted-amendment hash and do not force
+    law reconciliation.
+
+
+Article VI -- Filesystem and State Transitions
+
+Section 1. Filesystem Layout
+
+(a) .constitution/amendments/ stores constitutional amendments.
+(b) .constitution/FOUNDING.📝 (or .⏳ or .✅) stores the founding document at
+    the .constitution/ root.
+(c) .constitution/LAW.✅ (or .⏳ or .❌) stores derived law at the
+    .constitution/ root.
+(d) skill/scripts/ stores constitutional procedures and enforcement scripts.
+(e) skill/scripts/providers/<provider>/ stores all runtime-provider-specific
+    artifacts. For Cursor: skill/scripts/providers/cursor/ containing
+    hooks.json, commands/, agents/, and init.py. init.py manages installation
+    into the provider's runtime directory (.cursor/ for Cursor) via copy or
+    symlink.
+(f) Draft amendment records use filename form timestamp.📝.
+(g) Accepted amendment records use filename form timestamp.✅.
+(h) Only accepted amendment records (*.✅) and FOUNDING.✅ participate in
+    constitutional hash computation.
+(i) File extensions are emoji suffixes only (no .md).
+
+Section 2. State Transition Ownership
+
+| Transition                    | Script                    | Trigger                |
+| ----------------------------- | ------------------------- | ---------------------- |
+| LAW.✅ → LAW.⏳               | promote_article.py        | Amendment accepted     |
+| LAW.✅ → LAW.⏳               | hook_pre_tool_use.py      | Hash drift detected    |
+| LAW.⏳ → LAW.✅               | sync_article_hash.py      | Reconciliation succeeds|
+| LAW.* → LAW.❌                | verify_kernel_hash.py     | Malformed file         |
+| FOUNDING.📝 → FOUNDING.⏳     | apply_founding_result.py  | APPLY_OK               |
+| FOUNDING.⏳ → FOUNDING.📝     | apply_founding_result.py  | NEEDS_INPUT            |
+| FOUNDING.⏳ → FOUNDING.✅     | promote_founding.py       | Evaluation passed      |
+| ts.📝 → ts.✅                 | promote_article.py        | Review passed          |
+
+
+Article VII -- Layers
+
+Section 1. Operational Layers
+
+(a) Authoritative (durable, append-only): the constitutional log — the founding
+    document and ordered amendments. This is the constitution.
+(b) Derived (disposable, regeneratable): law — the compiled operating source for
+    agents, derived from the constitutional log by the codifier. Stamped with
+    amendment hashes for integrity verification.
+
+Section 2. Future Layers
+
+Future layers (workbench memos, tasks, views, snapshots) are anticipated by the
+original vision but are not currently operational. They are not described in law
+as current architecture. When implemented, each will be introduced by its own
+amendment.
+
+
+Article VIII -- Contracts and Ambiguity
+
+Section 1. Conceptual Commitment
+
+When the system cannot safely proceed, it must request missing information
+explicitly rather than guessing. Ambiguity is a first-class state, not a
+failure to be papered over.
+
+Section 2. Current Mechanism
+
+The mechanism for surfacing ambiguity is currently informal — agents surface
+ambiguity in conversation or in draft amendment text. When formal contract
+tooling (typed contract files, submission workflow, promotion into the log)
+becomes operational, it will be codified by a future amendment.
+
+
+Article IX -- Agent Interaction
+
+Section 1. Current Model
+
+(a) Agents operate under law. Law is the sole compiled source of operational
+    guidance.
+(b) When agents identify decisions that should become constitutional truth, they
+    draft amendments (.📝 files).
+(c) The constitutional lifecycle (review, ratification, acceptance,
+    reconciliation) handles promotion into law.
+(d) When agents cannot safely proceed due to missing information, they surface
+    the ambiguity explicitly rather than guessing.
+
+Section 2. Future Formalization
+
+A formalized interaction contract (with typed outcomes and contract file
+tooling) will be reintroduced by a future amendment when the supporting
+infrastructure exists.
+
+Section 3. Policy Language
+
+(a) Constitutional policy messages are phrased in constitutional terms.
+(b) Runtime or tooling identity references do not appear in constitutional
+    policy messages.

@@ -6,12 +6,14 @@ import shlex
 from pathlib import Path
 from typing import Any
 
+from constitutional_paths import base_name, parse_state_emoji
+
 
 READ_ONLY_BINARIES = {"ls", "rg", "grep", "cat", "head", "tail", "wc", "stat"}
 MUTATING_TOKEN_PATTERN = re.compile(
     r"\b(rm|mv|cp|touch|sed|perl|tee|truncate|dd|ln|chmod|chown|git)\b"
 )
-AMENDMENT_STATUS_PATTERN = re.compile(r"^(?P<ts>\d{14})(?:\.(?P<state>✅|📝))?$")
+AMENDMENT_STATUS_PATTERN = re.compile(r"^(?:(?P<state>✅|📝) )?(?P<ts>\d{14})$")
 
 
 def load_payload() -> dict[str, Any]:
@@ -148,7 +150,7 @@ def main() -> int:
             json.dumps(
                 {
                     "permission": "deny",
-                    "user_message": "Constitutional law: accepted amendments and .founding.✅ are immutable. LAW is managed by constitutional scripts. You may append new draft amendments (.📝). Promotion to ✅ is reserved for constitutional procedures.",
+                    "user_message": "Constitutional law: accepted amendments and ✅ .founding are immutable. LAW is managed by constitutional scripts. You may append new draft amendments (📝). Promotion to ✅ is reserved for constitutional procedures.",
                     "agent_message": "Apply constitutional policy: append new amendments as drafts, treat ✅ as immutable, LAW and .founding are managed by scripts only.",
                 }
             )

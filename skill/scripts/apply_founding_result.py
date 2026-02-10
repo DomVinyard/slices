@@ -4,6 +4,8 @@ import argparse
 import hashlib
 from pathlib import Path
 
+from constitutional_paths import discover_founding, make_name
+
 
 def _find_repo_root() -> Path:
     """Walk up from script location to find repo root (contains .constitution/)."""
@@ -13,16 +15,6 @@ def _find_repo_root() -> Path:
             return current
         current = current.parent
     return Path.cwd()
-
-
-def discover_founding(root: Path) -> tuple[Path, str] | None:
-    """Returns (path, state) or None. States: founding, review, draft."""
-    amendments_dir = root / ".constitution" / "amendments"
-    for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = amendments_dir / f".founding{suffix}"
-        if p.exists():
-            return p, state
-    return None
 
 
 def parse_args() -> argparse.Namespace:
@@ -84,7 +76,7 @@ def main() -> int:
     founding_path, founding_state = result
 
     if founding_state == "founding":
-        raise ValueError("Founding document is already accepted (.founding.✅) and is immutable.")
+        raise ValueError("Founding document is already accepted (✅ .founding) and is immutable.")
 
     text = founding_path.read_text(encoding="utf-8")
     prefix, frontmatter, body = parse_frontmatter(text)
@@ -101,7 +93,7 @@ def main() -> int:
                     order.remove(key)
         write_map(founding_path, prefix, body, mapping, order)
         # Deterministic rename: draft -> review
-        review_path = repo_root / ".constitution" / "amendments" / ".founding.⏳"
+        review_path = repo_root / ".constitution" / "amendments" / make_name("⏳", ".founding")
         if founding_path != review_path:
             founding_path.rename(review_path)
         print("founding_suitability_applied=APPLY_OK")
@@ -118,7 +110,7 @@ def main() -> int:
         write_map(founding_path, prefix, body, mapping, order)
         # If in review, go back to draft
         if founding_state == "review":
-            draft_path = repo_root / ".constitution" / "amendments" / ".founding.📝"
+            draft_path = repo_root / ".constitution" / "amendments" / make_name("📝", ".founding")
             founding_path.rename(draft_path)
         print("founding_suitability_applied=NEEDS_INPUT")
 

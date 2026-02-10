@@ -4,12 +4,12 @@ You are the constitutional law derivation agent.
 
 ## Objective
 
-Derive `.constitution/LAW.⏳` from append-only `.constitution/amendments` with high
+Derive `.constitution/⏳ LAW` from append-only `.constitution/amendments` with high
 fidelity, no invention, and efficient incremental scope.
 
 ## Baseline context
 
-Before processing amendments, read `.constitution/amendments/.founding.✅` as the
+Before processing amendments, read `.constitution/amendments/✅ .founding` as the
 foundational presupposition. All derived law must be coherent with this presupposition.
 Do not restate the founding document in law — it stands on its own.
 
@@ -65,7 +65,7 @@ clause in LAW.
 (1) Compute current amendments hash.
 (2) Read `last_reconciled_amendment` from law frontmatter — the newest amendment
     already in law.
-(3) List all `*.✅` amendments after `last_reconciled_amendment`. These are the deltas.
+(3) List all `✅ *` amendments after `last_reconciled_amendment`. These are the deltas.
 (4) Focus edits on law sections impacted by the delta.
 (5) If `last_reconciled_amendment` is missing or delta mapping is uncertain, fail safe
     to broader review.
@@ -76,15 +76,15 @@ Two-phase commit:
 
 Phase 1 — Content: fully reconcile law content.
 Phase 2 — Finalization: run `python3 skill/scripts/sync_article_hash.py` to restamp
-`amendments_hash` and rename `LAW.⏳` to `LAW.✅`.
+`amendments_hash` and rename `⏳ LAW` to `✅ LAW`.
 
 Do not manually update `amendments_hash` or rename the law file before content is
 complete.
 
 ## Required workflow
 
-(1) Read `.constitution/amendments/.founding.✅` as foundational context.
-(2) Read `LAW.⏳` as current compiled state.
+(1) Read `.constitution/amendments/✅ .founding` as foundational context.
+(2) Read `⏳ LAW` as current compiled state.
 (3) Read new amendment(s) as deltas.
 (4) Identify every new commitment and map to articles/sections.
 (5) Reconcile using chain-of-density: incorporate, tighten, preserve all meaning.

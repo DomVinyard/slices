@@ -18,7 +18,7 @@ An amendment is a record of decisions and commitments that, once accepted, becom
 
 Create a new file in `.constitution/amendments/` with:
 
-- **Filename**: `YYYYMMDDHHMMSS.📝` (current UTC timestamp, draft state)
+- **Filename**: `📝 YYYYMMDDHHMMSS` (draft state prefix, current UTC timestamp)
 - **Frontmatter**:
   ```
   ---

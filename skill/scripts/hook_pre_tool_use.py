@@ -2,12 +2,20 @@
 
 import json
 import re
-import hashlib
 from pathlib import Path
 from typing import Any
 
-
-VALID_SUFFIXES = {".✅", ".⏳", ".📝", ".❌"}
+from constitutional_paths import (
+    VALID_EMOJIS,
+    base_name,
+    compute_amendments_hash,
+    discover_founding,
+    discover_law,
+    extract_body_without_frontmatter,
+    is_constitutional_file,
+    make_name,
+    parse_state_emoji,
+)
 
 
 def load_payload() -> dict[str, Any]:
@@ -78,7 +86,7 @@ def is_amendment_file(path: Path, root: Path) -> bool:
         relative = path.resolve().relative_to(root.resolve()).as_posix()
     except Exception:
         return False
-    return relative.startswith(".constitution/amendments/") and path.suffix in VALID_SUFFIXES
+    return relative.startswith(".constitution/amendments/") and is_constitutional_file(path)
 
 
 def is_founding_document(path: Path, root: Path) -> bool:
@@ -86,7 +94,11 @@ def is_founding_document(path: Path, root: Path) -> bool:
         relative = path.resolve().relative_to(root.resolve()).as_posix()
     except Exception:
         return False
-    return relative.startswith(".constitution/amendments/.founding.") and path.suffix in VALID_SUFFIXES
+    return (
+        relative.startswith(".constitution/amendments/")
+        and base_name(path) == ".founding"
+        and is_constitutional_file(path)
+    )
 
 
 def is_law_file(path: Path, root: Path) -> bool:
@@ -94,35 +106,20 @@ def is_law_file(path: Path, root: Path) -> bool:
         relative = path.resolve().relative_to(root.resolve()).as_posix()
     except Exception:
         return False
-    return relative.startswith(".constitution/LAW.") and path.suffix in VALID_SUFFIXES
+    return (
+        relative.startswith(".constitution/")
+        and base_name(path) == "LAW"
+        and is_constitutional_file(path)
+    )
 
 
 def amendment_state(path: Path) -> str:
-    if path.suffix == ".✅":
+    emoji = parse_state_emoji(path)
+    if emoji == "✅":
         return "accepted"
-    if path.suffix == ".📝":
+    if emoji == "📝":
         return "draft"
     return "pending"
-
-
-def discover_law(root: Path) -> tuple[Path, str] | None:
-    """Returns (path, state) or None. States: active, resolving, corrupted."""
-    constitution_dir = root / ".constitution"
-    for state, suffix in [("active", ".✅"), ("resolving", ".⏳"), ("corrupted", ".❌")]:
-        p = constitution_dir / f"LAW{suffix}"
-        if p.exists():
-            return p, state
-    return None
-
-
-def discover_founding(root: Path) -> tuple[Path, str] | None:
-    """Returns (path, state) or None. States: founding, review, draft."""
-    amendments_dir = root / ".constitution" / "amendments"
-    for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = amendments_dir / f".founding{suffix}"
-        if p.exists():
-            return p, state
-    return None
 
 
 def parse_frontmatter(text: str) -> tuple[str, str, str]:
@@ -132,55 +129,6 @@ def parse_frontmatter(text: str) -> tuple[str, str, str]:
     if second == -1:
         return "", "", text
     return "---\n", text[4:second], text[second + 5 :]
-
-
-def list_constitutional_files(directory: Path) -> list[Path]:
-    return sorted(
-        path
-        for path in directory.iterdir()
-        if path.is_file() and path.suffix in VALID_SUFFIXES
-        and not path.name.startswith(".founding")
-    )
-
-
-def list_accepted_amendments(directory: Path) -> list[Path]:
-    return sorted(
-        path
-        for path in list_constitutional_files(directory)
-        if path.suffix == ".✅"
-    )
-
-
-def extract_body_without_frontmatter(text: str) -> str:
-    if text.startswith("---\n"):
-        second_delimiter = text.find("\n---\n", 4)
-        if second_delimiter != -1:
-            text = text[second_delimiter + 5 :]
-    return text.strip()
-
-
-def compute_amendments_hash(root: Path) -> str:
-    constitution_dir = root / ".constitution"
-    amendments_dir = constitution_dir / "amendments"
-    digest = hashlib.sha256()
-    # Include founding document first (if accepted)
-    founding = discover_founding(root)
-    if founding is not None:
-        founding_path, founding_state = founding
-        if founding_state == "founding":
-            relative = founding_path.resolve().relative_to(root.resolve()).as_posix()
-            content = extract_body_without_frontmatter(founding_path.read_text(encoding="utf-8"))
-            digest.update(f"FILE:{relative}\n".encode("utf-8"))
-            digest.update(content.encode("utf-8"))
-            digest.update(b"\n\x1e\n")
-    # Then accepted amendments
-    for path in list_accepted_amendments(amendments_dir):
-        relative = path.resolve().relative_to(root.resolve()).as_posix()
-        digest.update(f"FILE:{relative}\n".encode("utf-8"))
-        content = extract_body_without_frontmatter(path.read_text(encoding="utf-8"))
-        digest.update(content.encode("utf-8"))
-        digest.update(b"\n\x1e\n")
-    return digest.hexdigest()
 
 
 def parse_frontmatter_map(frontmatter: str) -> tuple[dict[str, str], list[str]]:
@@ -213,7 +161,7 @@ def write_frontmatter(path: Path, prefix: str, body: str, mapping: dict[str, str
 
 
 def mark_law_stale_if_drift(root: Path) -> None:
-    """If LAW is active but hash doesn't match, rename LAW.✅ -> LAW.⏳."""
+    """If LAW is active but hash doesn't match, rename ✅ LAW -> ⏳ LAW."""
     result = discover_law(root)
     if result is None:
         return
@@ -239,7 +187,7 @@ def mark_law_stale_if_drift(root: Path) -> None:
     if "status" in order:
         order.remove("status")
     write_frontmatter(law_path, prefix, body, mapping, order)
-    resolving_path = root / ".constitution" / "LAW.⏳"
+    resolving_path = root / ".constitution" / make_name("⏳", "LAW")
     law_path.rename(resolving_path)
 
 
@@ -268,7 +216,7 @@ def main() -> int:
             _, founding_state = founding
             if founding_state == "founding":
                 deny(
-                    "Constitutional law: .founding.✅ is the accepted grundnorm and is immutable."
+                    "Constitutional law: ✅ .founding is the accepted grundnorm and is immutable."
                 )
                 return 0
             # Draft or review state — allow edits
@@ -284,12 +232,12 @@ def main() -> int:
         result = discover_law(root)
         if result is not None:
             _, law_state = result
-            if law_state == "resolving":  # LAW.⏳ — open for codifier edits
+            if law_state == "resolving":  # ⏳ LAW — open for codifier edits
                 allow()
                 return 0
         deny(
             "Constitutional law: LAW files are derived artifacts. "
-            "Only LAW.⏳ (resolving state) is writable during reconciliation."
+            "Only ⏳ LAW (resolving state) is writable during reconciliation."
         )
         return 0
 
@@ -320,7 +268,7 @@ def main() -> int:
     new_state = amendment_state(amendment_paths[0])
     if new_state != "draft":
         deny(
-            "Constitutional law: new amendment records must begin in draft filename state (.📝)."
+            "Constitutional law: new amendment records must begin in draft filename state (📝)."
         )
         return 0
     if not contains_valid_draft_frontmatter(tool_input):

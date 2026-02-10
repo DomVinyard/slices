@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
-import hashlib
 from pathlib import Path
 
-
-VALID_SUFFIXES = {".✅", ".⏳", ".📝", ".❌"}
+from constitutional_paths import (
+    base_name,
+    compute_amendments_hash,
+    discover_law,
+    list_accepted_amendments,
+    make_name,
+)
 
 
 def _find_repo_root() -> Path:
@@ -22,71 +26,6 @@ CONSTITUTION_DIR = REPO_ROOT / ".constitution"
 AMENDMENTS_DIR = CONSTITUTION_DIR / "amendments"
 
 
-def discover_law() -> tuple[Path, str]:
-    """Returns (path, state). States: active, resolving, corrupted."""
-    for state, suffix in [("active", ".✅"), ("resolving", ".⏳"), ("corrupted", ".❌")]:
-        p = CONSTITUTION_DIR / f"LAW{suffix}"
-        if p.exists():
-            return p, state
-    raise FileNotFoundError("No LAW file found.")
-
-
-def discover_founding() -> tuple[Path, str] | None:
-    """Returns (path, state) or None. States: founding, review, draft."""
-    for state, suffix in [("founding", ".✅"), ("review", ".⏳"), ("draft", ".📝")]:
-        p = AMENDMENTS_DIR / f".founding{suffix}"
-        if p.exists():
-            return p, state
-    return None
-
-
-def list_constitutional_files(directory: Path) -> list[Path]:
-    return sorted(
-        path
-        for path in directory.iterdir()
-        if path.is_file() and path.suffix in VALID_SUFFIXES
-        and not path.name.startswith(".founding")
-    )
-
-
-def list_accepted_amendments(directory: Path) -> list[Path]:
-    return sorted(
-        path
-        for path in list_constitutional_files(directory)
-        if path.suffix == ".✅"
-    )
-
-
-def extract_body_without_frontmatter(text: str) -> str:
-    if text.startswith("---\n"):
-        second_delimiter = text.find("\n---\n", 4)
-        if second_delimiter != -1:
-            text = text[second_delimiter + 5 :]
-    return text.strip()
-
-
-def compute_amendments_hash() -> str:
-    digest = hashlib.sha256()
-    # Include founding document first (if accepted)
-    founding = discover_founding()
-    if founding is not None:
-        founding_path, founding_state = founding
-        if founding_state == "founding":
-            relative = founding_path.relative_to(REPO_ROOT).as_posix()
-            content = extract_body_without_frontmatter(founding_path.read_text(encoding="utf-8"))
-            digest.update(f"FILE:{relative}\n".encode("utf-8"))
-            digest.update(content.encode("utf-8"))
-            digest.update(b"\n\x1e\n")
-    # Then accepted amendments
-    for path in list_accepted_amendments(AMENDMENTS_DIR):
-        relative = path.relative_to(REPO_ROOT).as_posix()
-        content = extract_body_without_frontmatter(path.read_text(encoding="utf-8"))
-        digest.update(f"FILE:{relative}\n".encode("utf-8"))
-        digest.update(content.encode("utf-8"))
-        digest.update(b"\n\x1e\n")
-    return digest.hexdigest()
-
-
 def parse_frontmatter_parts(text: str) -> tuple[str, str, str]:
     if not text.startswith("---\n"):
         raise ValueError("File is missing opening frontmatter delimiter.")
@@ -99,12 +38,12 @@ def parse_frontmatter_parts(text: str) -> tuple[str, str, str]:
     return "---\n", frontmatter, body
 
 
-def latest_accepted_amendment_stem(directory: Path) -> str | None:
-    """Return the stem (timestamp) of the newest accepted amendment, or None."""
+def latest_accepted_amendment_base(directory: Path) -> str | None:
+    """Return the base name (timestamp) of the newest accepted amendment, or None."""
     accepted = list_accepted_amendments(directory)
     if not accepted:
         return None
-    return accepted[-1].stem
+    return base_name(accepted[-1])
 
 
 def upsert_amendments_hash(frontmatter: str, new_hash: str, last_amendment: str | None) -> str:
@@ -148,17 +87,20 @@ def upsert_amendments_hash(frontmatter: str, new_hash: str, last_amendment: str 
 
 
 def main() -> int:
-    law_path, law_state = discover_law()
-    amendment_hash = compute_amendments_hash()
-    last_amendment = latest_accepted_amendment_stem(AMENDMENTS_DIR)
+    result = discover_law(REPO_ROOT)
+    if result is None:
+        raise FileNotFoundError("No LAW file found.")
+    law_path, law_state = result
+    amendment_hash = compute_amendments_hash(REPO_ROOT)
+    last_amendment = latest_accepted_amendment_base(AMENDMENTS_DIR)
 
     text = law_path.read_text(encoding="utf-8")
     prefix, frontmatter, body = parse_frontmatter_parts(text)
     updated_frontmatter = upsert_amendments_hash(frontmatter, amendment_hash, last_amendment)
     updated_text = f"{prefix}{updated_frontmatter}\n---\n{body}"
 
-    # Always rename to LAW.✅ (active) after successful sync
-    active_path = CONSTITUTION_DIR / "LAW.✅"
+    # Always rename to ✅ LAW (active) after successful sync
+    active_path = CONSTITUTION_DIR / make_name("✅", "LAW")
     law_path.write_text(updated_text, encoding="utf-8")
     if law_path != active_path:
         law_path.rename(active_path)

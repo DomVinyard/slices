@@ -4,6 +4,8 @@ import argparse
 import hashlib
 from pathlib import Path
 
+from constitutional_paths import parse_state_emoji
+
 
 def _find_repo_root() -> Path:
     """Walk up from script location to find repo root (contains .constitution/)."""
@@ -19,7 +21,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Apply constitutional suitability result to draft amendment frontmatter."
     )
-    parser.add_argument("--article", required=True, help="Path to draft amendment (.📝)")
+    parser.add_argument("--article", required=True, help="Path to draft amendment (📝)")
     parser.add_argument("--result", required=True, choices=["APPLY_OK", "NEEDS_INPUT"])
     parser.add_argument("--reason-code", default="")
     parser.add_argument("--request", default="")
@@ -81,8 +83,8 @@ def main() -> int:
 
     if not amendment_path.exists():
         raise FileNotFoundError(f"Amendment not found: {amendment_path}")
-    if amendment_path.suffix != ".📝":
-        raise ValueError("Suitability result can be applied only to draft (.📝) amendments.")
+    if parse_state_emoji(amendment_path) != "📝":
+        raise ValueError("Suitability result can be applied only to draft (📝) amendments.")
 
     text = amendment_path.read_text(encoding="utf-8")
     prefix, frontmatter, body = parse_frontmatter(text)

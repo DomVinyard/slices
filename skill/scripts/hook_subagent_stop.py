@@ -15,7 +15,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-FOUNDING_DRAFT = ".founding.📝"
+from constitutional_paths import make_name, parse_state_emoji, tmp_path
+
+FOUNDING_DRAFT = make_name("📝", ".founding")
 
 
 def load_payload() -> dict[str, Any]:
@@ -60,17 +62,17 @@ def write_frontmatter_field(path: Path, field_name: str, value: str | None) -> N
         new_lines.append(f"{field_name}: {value}")
 
     updated = "---\n" + "\n".join(new_lines) + rest
-    tmp = path.with_suffix(".tmp")
+    tmp = tmp_path(path)
     tmp.write_text(updated, encoding="utf-8")
     tmp.rename(path)
 
 
 def _find_first_draft(amendments_dir: Path) -> Path | None:
-    """Find the first draft amendment (.📝) that is not the founding document."""
+    """Find the first draft amendment (📝) that is not the founding document."""
     if not amendments_dir.exists():
         return None
     for path in sorted(amendments_dir.iterdir()):
-        if path.is_file() and path.suffix == ".📝" and not path.name.startswith(".founding"):
+        if path.is_file() and parse_state_emoji(path) == "📝" and path.name != FOUNDING_DRAFT:
             return path
     return None
 
@@ -81,8 +83,8 @@ def main() -> int:
     subagent_type = payload.get("subagent_type", "")
 
     if subagent_type == "codifier":
-        # Clear resolution lock — file may have already transitioned to LAW.✅
-        law_path = root / ".constitution" / "LAW.⏳"
+        # Clear resolution lock — file may have already transitioned to ✅ LAW
+        law_path = root / ".constitution" / make_name("⏳", "LAW")
         if law_path.exists():
             write_frontmatter_field(law_path, "resolution_started_at", None)
 
@@ -96,7 +98,7 @@ def main() -> int:
         amendments_dir = root / ".constitution" / "amendments"
         if amendments_dir.exists():
             for path in amendments_dir.iterdir():
-                if path.is_file() and path.suffix == ".📝" and not path.name.startswith(".founding"):
+                if path.is_file() and parse_state_emoji(path) == "📝" and path.name != FOUNDING_DRAFT:
                     write_frontmatter_field(path, "evaluation_started_at", None)
 
     print(json.dumps({}))

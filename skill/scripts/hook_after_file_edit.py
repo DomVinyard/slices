@@ -4,8 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-
-VALID_SUFFIXES = {".✅", ".⏳", ".📝", ".❌"}
+from constitutional_paths import base_name, make_name, parse_state_emoji, swap_state, tmp_path
 
 
 def load_payload() -> dict[str, Any]:
@@ -57,7 +56,7 @@ def is_draft_amendment(path: Path, root: Path) -> bool:
         relative = path.resolve().relative_to(root.resolve()).as_posix()
     except Exception:
         return False
-    return relative.startswith(".constitution/amendments/") and path.suffix == ".📝"
+    return relative.startswith(".constitution/amendments/") and parse_state_emoji(path) == "📝"
 
 
 def main() -> int:
@@ -75,8 +74,8 @@ def main() -> int:
         return 0
     if not is_draft_amendment(file_path, root):
         return 0
-    # Guard: if a .✅ sibling exists, this .📝 is a ghost — skip.
-    if file_path.with_suffix(".✅").exists():
+    # Guard: if a ✅ sibling exists, this 📝 is a ghost — skip.
+    if swap_state(file_path, "✅").exists():
         return 0
 
     text = file_path.read_text(encoding="utf-8")

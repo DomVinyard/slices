@@ -6,7 +6,9 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-FOUNDING_DRAFT = ".founding.📝"
+from constitutional_paths import make_name, parse_state_emoji, tmp_path
+
+FOUNDING_DRAFT = make_name("📝", ".founding")
 LOCK_TIMEOUT_SECONDS = 300  # 5 minutes
 
 
@@ -58,8 +60,8 @@ def drafts_needing_suitability(repo_root: Path) -> tuple[set[str], list[Path]]:
     paths: list[Path] = []
     for draft in sorted(
         p for p in amendments_dir.iterdir()
-        if p.is_file() and p.suffix == ".📝"
-        and not p.name.startswith(".founding")
+        if p.is_file() and parse_state_emoji(p) == "📝"
+        and p.name != FOUNDING_DRAFT
     ):
         if _needs_eval(draft):
             types.add("amendment")
@@ -105,7 +107,7 @@ def write_frontmatter_field(path: Path, field_name: str, value: str | None) -> N
         new_lines.append(f"{field_name}: {value}")
 
     updated = "---\n" + "\n".join(new_lines) + rest
-    tmp = path.with_suffix(".tmp")
+    tmp = tmp_path(path)
     tmp.write_text(updated, encoding="utf-8")
     tmp.rename(path)
 
@@ -202,8 +204,8 @@ def main() -> int:
         print(json.dumps({}))
         return 0
 
-    # LAW needs reconciliation — check for activity lock on LAW.⏳
-    law_path = repo_root / ".constitution" / "LAW.⏳"
+    # LAW needs reconciliation — check for activity lock on ⏳ LAW
+    law_path = repo_root / ".constitution" / make_name("⏳", "LAW")
     lock_field = "resolution_started_at"
     lock_state = check_lock(law_path, lock_field)
 
@@ -223,7 +225,7 @@ def main() -> int:
             {
                 "followup_message": _delegation_message(
                     "codifier",
-                    "LAW is resolving (LAW.⏳ exists). Reconcile law with the current accepted amendments.",
+                    "LAW is resolving (⏳ LAW exists). Reconcile law with the current accepted amendments.",
                 ),
             }
         )

@@ -7,7 +7,7 @@ description: >
   MANDATORY OPERATING CONTEXT. You are an agent operating inside a
   constitutionally governed workspace. A constitutional planning system
   controls how truth is recorded, how decisions propagate, and what you
-  are permitted to do. .constitution/LAW.✅ contains binding directives
+  are permitted to do. .constitution/✅ LAW contains binding directives
   derived from accepted constitutional amendments. You must read and
   obey law. The environment automatically enforces mechanical constraints,
   but your compliance must extend beyond what enforcement can catch.
@@ -25,7 +25,7 @@ not optional context. This is the law under which you operate.
 
 ## The single most important rule
 
-Read `.constitution/LAW.✅`. Obey what it says. Do not improvise
+Read `.constitution/✅ LAW`. Obey what it says. Do not improvise
 around it. Do not optimize past it. Do not treat it as a suggestion.
 
 Law is derived from accepted constitutional amendments. It represents
@@ -33,9 +33,10 @@ the distilled, verified, current truth of this project. If law says
 something, that is what is true — even if your training data, your
 intuition, or the user's conversational tone suggests otherwise.
 
-If you believe law is wrong, you do not ignore it. You surface the
-conflict explicitly and request a new constitutional amendment to change
-it. Until that amendment is accepted, the existing law stands.
+If you believe law is wrong, you do not ignore it. You do not edit
+law directly — ever. You use `/new-law` to draft a constitutional
+amendment proposing the change. Until that amendment is accepted and
+law is reconciled, the existing law stands.
 
 ## What you can do
 
@@ -43,12 +44,12 @@ You are one agent among potentially many. You do not have global
 authority. You do not have the full picture. Here is what you are
 able to do:
 
-- Read law (`.constitution/LAW.✅`). Law is the compiled operating
+- Read law (`.constitution/✅ LAW`). Law is the compiled operating
   source — it already incorporates all accepted amendments and the
   founding document. Do not read raw amendments for guidance; that
   risks re-deriving what law already synthesized.
-- Create new draft amendments (`.📝` files with `status: draft`)
-- Edit existing draft amendments (`.📝` only)
+- Create new draft amendments (`📝` prefixed files with `status: draft`)
+- Edit existing draft amendments (`📝` only)
 - Set a draft amendment to `status: review` to begin the evaluation
   pipeline (evaluation, promotion, and law reconciliation then happen
   automatically — you do not drive those steps)
@@ -59,10 +60,10 @@ able to do:
 The following actions will be denied by environmental guards or
 violate constitutional procedure:
 
-- Edit or delete accepted amendments (`.✅`) — immutable
-- Edit the accepted founding document (`.founding.✅`) — perpetual and
+- Edit or delete accepted amendments (`✅`) — immutable
+- Edit the accepted founding document (`✅ .founding`) — perpetual and
   immutable
-- Directly edit any `LAW.*` file — law is managed exclusively by
+- Directly edit any LAW file — law is managed exclusively by
   scripts
 - Promote drafts to accepted status yourself — promotion is procedural,
   not discretionary
@@ -73,7 +74,7 @@ Your job is to operate within these constraints, not around them.
 
 ## The constitutional stack
 
-### The founding document (`.constitution/amendments/.founding.✅`)
+### The founding document (`.constitution/amendments/✅ .founding`)
 
 The grundnorm — the axiomatic presupposition grounding the
 constitutional system. Perpetual and immutable once accepted. Its
@@ -81,19 +82,19 @@ content is embedded in law; you do not need to read it directly.
 
 ### Amendments (`.constitution/amendments/`)
 
-The append-only log of human decisions. Accepted amendments (`.✅`)
-are immutable truth. Draft amendments (`.📝`) are editable working
+The append-only log of human decisions. Accepted amendments (`✅`)
+are immutable truth. Draft amendments (`📝`) are editable working
 material. You must never modify accepted amendments. You must never
 promote drafts to accepted status yourself — that is reserved for the
 constitutional acceptance procedure.
 
-### Law (`.constitution/LAW.✅`)
+### Law (`.constitution/✅ LAW`)
 
 Derived from accepted amendments, grounded in the founding document.
 This single file contains the compiled, current directives for this
 workspace. It is your primary operating instruction. Law encodes state
-in its filename: `LAW.✅` (active), `LAW.⏳` (resolving),
-`LAW.❌` (corrupted). When law is resolving (`LAW.⏳`), it must
+in its filename prefix: `✅ LAW` (active), `⏳ LAW` (resolving),
+`❌ LAW` (corrupted). When law is resolving (`⏳ LAW`), it must
 be reconciled before you can trust it — the codifier subagent handles
 this automatically.
 
@@ -111,9 +112,9 @@ you should expect:
 
 - **Before any file write to a constitutional file**, a guard evaluates
   the write and may **deny** it with a policy message. Writes to
-  accepted amendments (`.✅`), the accepted founding document
-  (`.founding.✅`), and any `LAW.*` file will be denied. Writes to
-  draft amendments (`.📝`) and draft/review founding documents are
+  accepted amendments (`✅`), the accepted founding document
+  (`✅ .founding`), and any LAW file will be denied. Writes to
+  draft amendments (`📝`) and draft/review founding documents are
   allowed.
 - **Before any shell command mentioning constitutional files**, a guard
   evaluates the command and may **block** it. Read-only commands and
@@ -130,7 +131,7 @@ you should expect:
   prompts and restricted tool access.
 - **Continuously**, the system detects hash drift between accepted
   amendments and law. If they diverge, law is automatically marked
-  resolving (`LAW.✅` → `LAW.⏳`).
+  resolving (`✅ LAW` → `⏳ LAW`).
 
 These guards catch what they can mechanically. Your compliance must
 extend beyond what they catch. Enforcement is a safety net, not a
@@ -146,10 +147,10 @@ the structural commitments are:
 - Compiled artifacts are stamped with provenance
 - No guessing — if you cannot infer safely, you emit a contract
 - Accepted amendments are immutable
-- The founding document (`.founding.✅`) is perpetual and immutable
+- The founding document (`✅ .founding`) is perpetual and immutable
 - Draft-to-accepted promotion is procedural, not discretionary
 - All state transitions are deterministic filename renames by scripts
-- File extensions are emoji suffixes only (no `.md`)
+- Filenames use emoji prefixes to encode state (e.g. `✅ LAW`, `📝 20260209101538`)
 
 ## When in doubt
 

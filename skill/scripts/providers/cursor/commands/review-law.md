@@ -4,7 +4,7 @@ A draft amendment is ready for suitability evaluation. Your job is to set its st
 
 ## Procedure
 
-1. Identify the draft amendment. Look for `.📝` files in `.constitution/amendments/` — there should be one that was recently drafted or is currently being discussed.
+1. Identify the draft amendment. Look for `📝 *` files in `.constitution/amendments/` — there should be one that was recently drafted or is currently being discussed.
 2. If multiple drafts exist, ask the user which one to submit.
 3. Read the draft and confirm with the user that the content accurately captures their intent.
 4. Update the amendment's frontmatter `status` from `draft` to `review`:

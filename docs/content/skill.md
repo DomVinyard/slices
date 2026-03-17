@@ -9,7 +9,7 @@ You have access to persistent, file-based context via **slices**. Each slice is 
 
 No special tools required. You read and write slices as plain files.
 
-For the full specification, read [SPEC.md](SPEC.md).
+For the full specification, read [slices.info/spec.md](https://slices.info/spec.md).
 
 ## Quick Reference
 

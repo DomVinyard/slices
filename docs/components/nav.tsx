@@ -17,14 +17,12 @@ export function Nav() {
           >
             spec
           </Link>
-          <a
-            href="https://github.com/nicholasdomin/slices"
+          <Link
+            href="/resources"
             className="text-zinc-400 hover:text-zinc-100 transition-colors"
-            target="_blank"
-            rel="noopener noreferrer"
           >
-            github
-          </a>
+            skill
+          </Link>
         </div>
       </div>
     </nav>

@@ -151,14 +151,12 @@ export default function Home() {
               Read the specification
             </Link>
             <span className="text-zinc-700">|</span>
-            <a
-              href="https://github.com/nicholasdomin/slices"
+            <Link
+              href="/resources"
               className="text-zinc-400 hover:text-zinc-300 transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
             >
-              GitHub
-            </a>
+              View the skill
+            </Link>
           </div>
           <p className="text-center text-xs text-zinc-600 mt-8">v0.2</p>
         </section>

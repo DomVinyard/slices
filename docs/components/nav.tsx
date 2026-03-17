@@ -62,6 +62,9 @@ export function Nav() {
           <Link href="/about" className={linkClass("/about")}>
             about
           </Link>
+          <Link href="/resources" className={linkClass("/resources")}>
+            skill
+          </Link>
         </div>
       </div>
     </nav>

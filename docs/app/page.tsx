@@ -200,6 +200,13 @@ export default function Home() {
             >
               Why slices?
             </Link>
+            <span className="text-zinc-700">|</span>
+            <Link
+              href="/resources"
+              className="text-zinc-400 hover:text-zinc-300 transition-colors"
+            >
+              View the skill
+            </Link>
           </div>
           <p className="text-center text-xs text-zinc-600 mt-8">v0.2</p>
         </section>

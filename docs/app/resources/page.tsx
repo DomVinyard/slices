@@ -17,7 +17,6 @@ function loadFile(name: string) {
 export default function ResourcesPage() {
   const files = [
     { name: "SKILL.md", content: loadFile("skill.md") },
-    { name: "SPEC.md", content: loadFile("spec.md") },
   ];
 
   return (

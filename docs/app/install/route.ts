@@ -11,7 +11,6 @@ install_to() {
   name="$2"
   mkdir -p "\${dir}"
   curl -fsSL "\${BASE_URL}/skill" -o "\${dir}/SKILL.md"
-  curl -fsSL "\${BASE_URL}/spec.md" -o "\${dir}/SPEC.md"
   INSTALLED="\${INSTALLED}  \${name}: \${dir}\\n"
 }
 
@@ -36,7 +35,7 @@ fi
 printf "\${INSTALLED}"
 echo ""
 echo "  SKILL.md  — teaches your agent how to use slices"
-echo "  SPEC.md   — the full format specification"
+echo "  Spec:       slices.info/spec.md"
 echo ""
 echo "  Your agent will discover the skill automatically."
 echo ""

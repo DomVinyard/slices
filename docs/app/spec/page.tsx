@@ -3,6 +3,7 @@ import path from "path";
 import matter from "gray-matter";
 import { renderMarkdown } from "@/lib/markdown";
 import { Nav } from "@/components/nav";
+import { CopyCommand } from "@/components/copy-command";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,6 +21,12 @@ export default async function SpecPage() {
     <>
       <Nav />
       <main className="max-w-4xl mx-auto px-6 py-16">
+        <div className="mb-12 p-6 rounded-lg border border-zinc-800 bg-zinc-900/50">
+          <p className="text-sm text-zinc-400 mb-3">
+            Copy and paste into your agent to install the skill:
+          </p>
+          <CopyCommand command="curl -fsSL slices.info/install | sh" />
+        </div>
         <article
           className="prose prose-invert prose-zinc max-w-none
             prose-headings:scroll-mt-20

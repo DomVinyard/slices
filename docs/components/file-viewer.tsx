@@ -5,6 +5,7 @@ import { useState } from "react";
 interface FileEntry {
   name: string;
   content: string;
+  rawHref: string;
 }
 
 function FileIcon() {
@@ -78,12 +79,12 @@ export function FileViewer({ files }: { files: FileEntry[] }) {
 
   return (
     <div className="border border-zinc-800 rounded-lg overflow-hidden bg-zinc-950">
-      <div className="flex border-b border-zinc-800 bg-zinc-900/50">
+      <div className="flex border-b border-zinc-800 bg-zinc-900/50 overflow-x-auto">
         {files.map((f, i) => (
           <button
             key={f.name}
             onClick={() => setActiveFile(i)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-mono border-r border-zinc-800 transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-mono border-r border-zinc-800 transition-colors whitespace-nowrap ${
               i === activeFile
                 ? "bg-zinc-950 text-zinc-100 border-b-2 border-b-indigo-500"
                 : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
@@ -95,8 +96,8 @@ export function FileViewer({ files }: { files: FileEntry[] }) {
         ))}
         <div className="flex-1" />
         <a
-          href={activeFile === 0 ? "/skill" : "/spec.md"}
-          className="flex items-center px-4 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          href={file.rawHref}
+          className="flex items-center px-4 text-xs text-zinc-500 hover:text-zinc-300 transition-colors whitespace-nowrap"
           download
         >
           raw
@@ -105,7 +106,7 @@ export function FileViewer({ files }: { files: FileEntry[] }) {
 
       <div className="flex overflow-auto max-h-[70vh] font-mono text-xs leading-5">
         <LineNumbers count={lines.length} />
-        <pre className="flex-1 p-4 overflow-x-auto">
+        <pre className="flex-1 p-4 whitespace-pre-wrap break-words">
           {lines.map((line, i) => (
             <div key={i}>{highlightYamlLine(line) || "\u00A0"}</div>
           ))}

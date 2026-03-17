@@ -4,6 +4,7 @@ import { useState } from "react";
 
 interface FileEntry {
   name: string;
+  tab?: string;
   content: string;
   rawHref: string;
 }
@@ -91,7 +92,7 @@ export function FileViewer({ files }: { files: FileEntry[] }) {
             }`}
           >
             <FileIcon />
-            {f.name}
+            {f.tab || f.name}
           </button>
         ))}
         <div className="flex-1" />

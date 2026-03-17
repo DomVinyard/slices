@@ -17,11 +17,11 @@ function loadFile(relativePath: string) {
 
 export default function ResourcesPage() {
   const files = [
-    { name: "SKILL.md", content: loadFile("skill.md"), rawHref: "/skill" },
-    { name: "resources/creating.md", content: loadFile("resources/creating.md"), rawHref: "/skill/resources/creating" },
-    { name: "resources/discovering.md", content: loadFile("resources/discovering.md"), rawHref: "/skill/resources/discovering" },
-    { name: "resources/maintaining.md", content: loadFile("resources/maintaining.md"), rawHref: "/skill/resources/maintaining" },
-    { name: "resources/frontmatter.md", content: loadFile("resources/frontmatter.md"), rawHref: "/skill/resources/frontmatter" },
+    { name: "SKILL.md", tab: "SKILL.md", content: loadFile("skill.md"), rawHref: "/skill" },
+    { name: "resources/creating.md", tab: "creating.md", content: loadFile("resources/creating.md"), rawHref: "/skill/resources/creating" },
+    { name: "resources/discovering.md", tab: "discovering.md", content: loadFile("resources/discovering.md"), rawHref: "/skill/resources/discovering" },
+    { name: "resources/maintaining.md", tab: "maintaining.md", content: loadFile("resources/maintaining.md"), rawHref: "/skill/resources/maintaining" },
+    { name: "resources/frontmatter.md", tab: "frontmatter.md", content: loadFile("resources/frontmatter.md"), rawHref: "/skill/resources/frontmatter" },
   ];
 
   return (

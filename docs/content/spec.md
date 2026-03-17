@@ -4,8 +4,6 @@ A slice is a file-based unit of context for AI agents. Each slice is a `.slice` 
 
 Slices are designed to be read and written directly by LLMs. No special tooling is required. An agent that can read and write files can work with slices.
 
----
-
 ## File Structure
 
 A `.slice` file has two parts:
@@ -41,8 +39,6 @@ The system uses JWT tokens for stateless authentication...
 ```
 
 No namespace prefix. All top-level YAML keys are slice keys. The `.slice` extension identifies the format.
-
----
 
 ## Frontmatter Schema
 
@@ -293,8 +289,6 @@ These are recommendations, not constraints. Agents should use whatever `rel` str
 
 Use `meta` for anything not covered by the schema: `priority`, `sprint`, `reviewer`, custom labels, tool-specific data.
 
----
-
 ## Discovery
 
 Slices must be discoverable without reading every body. The frontmatter is the discovery index.
@@ -351,8 +345,6 @@ write: replace
 - **01JSPRINT01** — Sprint 14 Context (ephemeral, expires 2026-03-28)
 ```
 
----
-
 ## Storage
 
 Slices are stored flat in a `.slices/` directory at the project root, named by ID:
@@ -371,8 +363,6 @@ No nested directories. No semantic folder structure. The frontmatter (title, sum
 
 Personal slices (`scope: personal`) live outside the project, in a user-specific location. The convention is `~/.slices/` but agents should adapt to the environment.
 
----
-
 ## Identifiers
 
 Use [ULIDs](https://github.com/ulid/spec) for IDs:
@@ -384,8 +374,6 @@ Use [ULIDs](https://github.com/ulid/spec) for IDs:
 - Monotonically increasing within the same millisecond
 
 Agents generating ULIDs can use any method: a ULID library, a timestamp-based approach, or even a reasonable approximation. The important properties are uniqueness and rough time-ordering.
-
----
 
 ## JSONL Bodies
 
@@ -409,8 +397,6 @@ To update a row without editing in place, append a new row with `_meta.supersede
 ```
 
 The active version is the newest in the supersession chain. This preserves history and makes concurrent writes safe.
-
----
 
 ## Complete Examples
 

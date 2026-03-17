@@ -71,25 +71,25 @@ export default function Home() {
               {"\n"}
               <span className="text-indigo-400">id</span>
               <span className="text-zinc-500">: </span>
-              <span className="text-zinc-300">01JARCH00000000000000001</span>
+              <span className="text-zinc-300">01JTRIP00000000000000001</span>
               {"\n"}
               <span className="text-indigo-400">title</span>
               <span className="text-zinc-500">: </span>
-              <span className="text-emerald-400">Authentication Architecture</span>
+              <span className="text-emerald-400">Italy Trip Planning</span>
               {"\n"}
               <span className="text-indigo-400">summary</span>
               <span className="text-zinc-500">: </span>
               <span className="text-emerald-400">
-                JWT-based stateless auth with refresh token rotation
+                Two-week Italy itinerary covering Rome, Florence, and the Amalfi Coast
               </span>
               {"\n"}
               <span className="text-indigo-400">tags</span>
               <span className="text-zinc-500">: </span>
-              <span className="text-zinc-300">[architecture, security]</span>
+              <span className="text-zinc-300">[travel, europe, planning]</span>
               {"\n"}
               <span className="text-indigo-400">topics</span>
               <span className="text-zinc-500">: </span>
-              <span className="text-zinc-300">[JWT, OAuth2, refresh-tokens, RS256]</span>
+              <span className="text-zinc-300">[Italy, Rome, Florence, Amalfi-Coast, restaurants]</span>
               {"\n"}
               <span className="text-indigo-400">lifecycle</span>
               <span className="text-zinc-500">: </span>
@@ -97,11 +97,11 @@ export default function Home() {
               {"\n"}
               <span className="text-indigo-400">created_at</span>
               <span className="text-zinc-500">: </span>
-              <span className="text-emerald-400">{'"2026-01-15T10:00:00Z"'}</span>
+              <span className="text-emerald-400">{'"2026-03-01T09:00:00Z"'}</span>
               {"\n"}
               <span className="text-indigo-400">updated_at</span>
               <span className="text-zinc-500">: </span>
-              <span className="text-emerald-400">{'"2026-03-10T14:30:00Z"'}</span>
+              <span className="text-emerald-400">{'"2026-03-15T18:20:00Z"'}</span>
               {"\n"}
               <span className="text-indigo-400">validity</span>
               <span className="text-zinc-500">:</span>
@@ -112,11 +112,11 @@ export default function Home() {
               {"\n"}
               <span className="text-indigo-400">{"  stale_after"}</span>
               <span className="text-zinc-500">: </span>
-              <span className="text-zinc-300">90d</span>
+              <span className="text-zinc-300">30d</span>
               {"\n"}
               <span className="text-indigo-400">scope</span>
               <span className="text-zinc-500">: </span>
-              <span className="text-amber-400">project</span>
+              <span className="text-amber-400">personal</span>
               {"\n"}
               <span className="text-indigo-400">kind</span>
               <span className="text-zinc-500">: </span>
@@ -135,9 +135,23 @@ export default function Home() {
               {"\n"}
               <span className="text-zinc-500">---</span>
               {"\n\n"}
-              <span className="text-zinc-400">
-                {"# Authentication Architecture\n\nThe system uses JWT tokens..."}
-              </span>
+              <span className="text-zinc-400">{"# Italy Trip Planning"}</span>
+              {"\n\n"}
+              <span className="text-zinc-300">{"Fly into Rome on June 5th. Spend three days there — the"}</span>
+              {"\n"}
+              <span className="text-zinc-300">{"Colosseum, Vatican, and Trastevere for dinner. Maria"}</span>
+              {"\n"}
+              <span className="text-zinc-300">{"recommended Da Enzo for cacio e pepe."}</span>
+              {"\n\n"}
+              <span className="text-zinc-300">{"Take the train to Florence on the 8th. Staying near"}</span>
+              {"\n"}
+              <span className="text-zinc-300">{"Santo Spirito — the Uffizi is pre-booked for the 9th."}</span>
+              {"\n"}
+              <span className="text-zinc-300">{"Day trip to Siena on the 10th."}</span>
+              {"\n\n"}
+              <span className="text-zinc-300">{"Drive down to Positano on the 12th. Need to book the"}</span>
+              {"\n"}
+              <span className="text-zinc-300">{"boat tour to Capri and find a cooking class in Ravello."}</span>
             </pre>
           </div>
         </section>

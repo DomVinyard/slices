@@ -19,8 +19,7 @@ export default function Home() {
           <CopyCommand command="curl -fsSL slices.info/install | sh" />
 
           <p className="text-sm text-zinc-500 mt-4">
-            Installs the skill to{" "}
-            <code className="text-zinc-400">~/.cursor/skills/slices/</code>
+            Works with Cursor and Claude Code
           </p>
         </section>
 

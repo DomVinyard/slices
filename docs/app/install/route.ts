@@ -3,18 +3,37 @@ import { NextResponse } from "next/server";
 const INSTALL_SCRIPT = `#!/bin/sh
 set -e
 
-SKILL_DIR="\${HOME}/.cursor/skills/slices"
 BASE_URL="https://slices.info"
+INSTALLED=""
+
+install_to() {
+  dir="$1"
+  name="$2"
+  mkdir -p "\${dir}"
+  curl -fsSL "\${BASE_URL}/skill" -o "\${dir}/SKILL.md"
+  curl -fsSL "\${BASE_URL}/spec.md" -o "\${dir}/SPEC.md"
+  INSTALLED="\${INSTALLED}  \${name}: \${dir}\\n"
+}
 
 echo "Installing slices skill..."
-
-mkdir -p "\${SKILL_DIR}"
-
-curl -fsSL "\${BASE_URL}/skill" -o "\${SKILL_DIR}/SKILL.md"
-curl -fsSL "\${BASE_URL}/spec.md" -o "\${SKILL_DIR}/SPEC.md"
-
 echo ""
-echo "  Installed to \${SKILL_DIR}"
+
+# Cursor (also reads ~/.claude/skills/)
+if [ -d "\${HOME}/.cursor" ]; then
+  install_to "\${HOME}/.cursor/skills/slices" "Cursor"
+fi
+
+# Claude Code
+if [ -d "\${HOME}/.claude" ]; then
+  install_to "\${HOME}/.claude/skills/slices" "Claude Code"
+fi
+
+# Fallback: if neither directory exists, create for Cursor
+if [ -z "\${INSTALLED}" ]; then
+  install_to "\${HOME}/.cursor/skills/slices" "Cursor"
+fi
+
+printf "\${INSTALLED}"
 echo ""
 echo "  SKILL.md  — teaches your agent how to use slices"
 echo "  SPEC.md   — the full format specification"

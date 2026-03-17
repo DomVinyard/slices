@@ -8,7 +8,43 @@ export default function Home() {
       <Nav />
       <main className="max-w-4xl mx-auto px-6">
         <section className="pt-24 pb-16 text-center">
-          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-zinc-50 mb-4">
+          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-zinc-50 mb-4 flex items-center justify-center gap-0">
+            <svg
+              width="60"
+              height="60"
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="shrink-0 -ml-8"
+            >
+              <defs>
+                <filter id="hero-neon" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <g transform="rotate(-18 32 32)">
+                <path
+                  d="M32 56 L12 16 A26 26 0 0 1 52 16Z"
+                  fill="#1e1b4b"
+                  stroke="#818cf8"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                  filter="url(#hero-neon)"
+                />
+                <path
+                  d="M15.5 19.5 A22 22 0 0 1 48.5 19.5 L52 16 A26 26 0 0 0 12 16Z"
+                  fill="#a78bfa"
+                  opacity="0.2"
+                />
+                <circle cx="30" cy="32" r="3.5" fill="#f472b6" opacity="0.8" filter="url(#hero-neon)" />
+                <circle cx="38" cy="24" r="2.5" fill="#fb923c" opacity="0.8" filter="url(#hero-neon)" />
+                <circle cx="27" cy="42" r="2.5" fill="#f472b6" opacity="0.7" filter="url(#hero-neon)" />
+              </g>
+            </svg>
             slices
           </h1>
           <p className="text-lg sm:text-xl text-zinc-400 max-w-xl mx-auto mb-12">

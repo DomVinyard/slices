@@ -2,48 +2,28 @@
 
 import { useState } from "react";
 
-interface CopyCommandProps {
-  command: string;
-  copyText?: string;
-  className?: string;
-}
-
-export function CopyCommand({ command, copyText, className = "" }: CopyCommandProps) {
+export function CopyCommand({ command }: { command: string }) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(copyText || command);
+  const copy = async () => {
+    await navigator.clipboard.writeText(command);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div
-      className={`group relative bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 rounded-2xl p-6 cursor-pointer hover:border-amber-300 hover:shadow-lg hover:shadow-amber-100/50 transition-all duration-200 ${className}`}
-      onClick={handleCopy}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          handleCopy();
-        }
-      }}
+    <button
+      onClick={copy}
+      className="group relative w-full max-w-xl mx-auto block bg-zinc-900 border border-zinc-700 hover:border-indigo-500/50 rounded-lg px-6 py-4 text-left transition-all cursor-pointer"
     >
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="text-amber-400 select-none text-lg">$</span>
-          <code className="font-mono text-zinc-700 text-base overflow-x-auto">{command}</code>
-        </div>
-        <span
-          className={`text-sm font-medium whitespace-nowrap transition-all ${
-            copied
-              ? "text-green-600"
-              : "text-amber-600/70 group-hover:text-amber-600"
-          }`}
-        >
-          {copied ? "Copied!" : "Click to copy"}
+        <code className="text-indigo-300 font-mono text-sm sm:text-base">
+          {command}
+        </code>
+        <span className="text-zinc-500 group-hover:text-zinc-300 text-xs shrink-0 transition-colors">
+          {copied ? "copied" : "copy"}
         </span>
       </div>
-    </div>
+    </button>
   );
 }

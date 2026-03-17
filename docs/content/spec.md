@@ -1,6 +1,8 @@
-# Specification
+# Slices Specification v0.2
 
-Slices v1 format specification.
+A slice is a file-based unit of context for AI agents. Each slice is a `.slice` file containing YAML frontmatter and a body. The frontmatter describes what the slice is, when it was created, whether it's still valid, who it's for, and how it should be maintained. The body contains the actual content.
+
+Slices are designed to be read and written directly by LLMs. No special tooling is required. An agent that can read and write files can work with slices.
 
 ---
 
@@ -8,71 +10,447 @@ Slices v1 format specification.
 
 A `.slice` file has two parts:
 
-1. **Frontmatter** — YAML between `---` markers, containing all metadata
-2. **Body** — content after the frontmatter
-
-```
----
-slice:
-  v: "1"
-  id: 01JEXAMPLE000000000000001
-  title: Example file
-  summary: A brief description for browsing and retrieval.
-  body:
-    type: markdown
----
-
-Body content goes here.
-```
-
-All metadata lives under the `slice:` namespace. This makes it easy to strip frontmatter before passing content to an LLM.
-
-## File Kinds
-
-Every file has a `kind` that determines how it should be treated:
-
-### Context
-
-Content is here. Read it directly.
-
-```yaml
-slice:
-  kind: context
-  body:
-    type: markdown
-```
-
-Context slices contain the actual knowledge—in any supported body type (markdown, jsonl, text, code, conversation, yaml, or routine). They're sized to be readable by agents and humans.
-
-**Example: Authentication Architecture**
+1. **Frontmatter** — YAML between `---` markers
+2. **Body** — everything after the closing `---`
 
 ```yaml
 ---
-slice:
-  v: "1"
-  kind: context
-  id: 01JARCH00000000000000001
-  title: Authentication architecture
-  summary: How authentication works in the system. JWT-based, stateless, with refresh token rotation.
-  body:
-    type: markdown
-  contract:
-    purpose: "Authentication architecture and design decisions."
-    exclude:
-      - "API endpoint details"
-      - "security audit findings"
-    format: "Document design decisions with rationale."
-    write: replace
-    overflow: summarize
-  links:
-    - rel: depends_on
-      to: 01JAPI000000000000000002
-    - rel: routes_to
-      to: ./api-reference.slice
-      label: "API endpoint details"
-    - rel: routes_to
-      to: ./security/
-      label: "Security audit findings"
+v: "0.2"
+id: 01JARCH00000000000000001
+title: Authentication Architecture
+summary: JWT-based stateless auth with refresh token rotation, RS256 signing, rate-limited login
+tags: [architecture, backend]
+topics: [JWT, OAuth2, refresh-tokens, RS256, rate-limiting]
+lifecycle: perpetual
+created_at: "2026-01-15T10:00:00Z"
+updated_at: "2026-03-10T14:30:00Z"
+validity:
+  status: fresh
+  stale_after: 90d
+scope: project
+audience: both
+kind: context
+body:
+  type: markdown
+write: replace
+---
+
+# Authentication Architecture
+
+The system uses JWT tokens for stateless authentication...
+```
+
+No namespace prefix. All top-level YAML keys are slice keys. The `.slice` extension identifies the format.
+
+---
+
+## Frontmatter Schema
+
+### Identity
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `v` | string | yes | Spec version. `"0.2"` |
+| `id` | string | yes | Globally unique identifier. ULID recommended (sortable by creation time, URL-safe, 26 chars). |
+| `title` | string | yes | Clear, descriptive name for browsing and search. |
+| `summary` | string | yes | Retrieval-optimized description. See [Writing Summaries](#writing-summaries). |
+| `tags` | string[] | no | Organizational labels for categorical filtering. |
+| `topics` | string[] | no | Key entities, concepts, and terms this slice covers. See [Discovery](#discovery). |
+
+#### Writing Summaries
+
+The summary is the most important discovery field. Write it as a search result snippet — front-load the key terms someone would search for. Include specific names, technologies, patterns, and decisions.
+
+**Good:** `"JWT-based stateless authentication with refresh token rotation, RS256 signing, rate-limited login"`
+
+**Bad:** `"Notes about how authentication works in our system"`
+
+The summary should let an agent decide whether to read the body without opening the file.
+
+#### Topics vs Tags
+
+Tags are organizational bins: `[architecture, backend, security]`. Use them for broad categorization.
+
+Topics are the specific things this slice is about: `[JWT, OAuth2, refresh-tokens, RS256, rate-limiting]`. Use them for keyword matching. An agent searching for "refresh tokens" matches on topics without reading the body.
+
+Together with the summary, agents get three complementary discovery vectors: natural language (summary), keyword (topics), categorical (tags).
+
+### Temporality
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `lifecycle` | enum | yes | Temporal nature of this slice. |
+| `created_at` | ISO 8601 | yes | When this slice was created. |
+| `updated_at` | ISO 8601 | yes | When this slice was last modified. |
+
+#### Lifecycle Types
+
+**`perpetual`** — Living document. Continuously maintained. Updated over time. Becomes stale if not maintained. Examples: architecture overview, decision log, team conventions.
+
+**`snapshot`** — Point-in-time capture. Immutable after creation. Represents truth *at that moment*. Implies `write: immutable`. Examples: sprint retrospective, incident post-mortem, release notes.
+
+**`ephemeral`** — Temporary context. Expected to expire and be cleaned up. Should have `validity.expires_at` set. Examples: current debugging session, active investigation notes, temporary workaround documentation.
+
+### Validity
+
+The validity block declares how and when a slice becomes invalid. This is how agents determine whether to trust the content.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `validity.status` | enum | no | `fresh`, `stale`, `expired`, or `unknown`. Current validity state. |
+| `validity.expires_at` | ISO 8601 \| null | no | Hard expiry timestamp. After this, the slice is expired. `null` means never. |
+| `validity.stale_after` | duration | no | Duration after `updated_at` before the slice is considered stale. Examples: `90d`, `24h`, `2w`, `6m`. |
+| `validity.depends_on` | array | no | Source slices that, if changed, invalidate this slice. |
+| `validity.depends_on[].id` | string | — | Source slice ID. |
+| `validity.depends_on[].hash` | string | — | Content hash of the source at the time this slice was last validated. Format: `sha256:...` |
+| `validity.triggers` | string[] | no | Named events that invalidate this slice. Examples: `deploy`, `schema-change`, `sprint-end`. |
+| `validity.checked_at` | ISO 8601 | no | When an agent last verified this slice's validity. |
+
+#### Duration Format
+
+Durations use a simple format: a number followed by a unit.
+
+| Unit | Meaning | Example |
+|------|---------|---------|
+| `h` | hours | `24h` |
+| `d` | days | `90d` |
+| `w` | weeks | `2w` |
+| `m` | months | `6m` |
+| `y` | years | `1y` |
+
+#### Staleness Model
+
+For perpetual slices, staleness is time-based. A slice with `stale_after: 90d` that was last updated 100 days ago is stale.
+
+For derived slices (those with `derived_from`), staleness is hash-based. If the source content's hash no longer matches `derived_from.hash`, the derived slice is stale and should be regenerated.
+
+Event-based invalidation uses `validity.triggers`. When a named event occurs (e.g., a deploy), all slices listing that trigger should be reviewed.
+
+Agents should update `validity.status` and `validity.checked_at` when they verify a slice.
+
+### Scope
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `scope` | enum | no | `personal`, `project`, or `team`. Defaults to `project`. |
+| `owner` | string | no | Who maintains this slice. |
+| `audience` | enum | no | `agent`, `human`, or `both`. Defaults to `both`. |
+
+**`personal`** — Belongs to one agent or user. Not shared. Lives in a personal context directory, not the project's `.slices/`.
+
+**`project`** — Shared within this project. Lives in `.slices/` at the project root.
+
+**`team`** — Shared across projects for a team. Lives in a shared location.
+
+**`audience: agent`** — Optimized for agent consumption. May use terse formatting, structured data, or conventions that assume an LLM reader.
+
+**`audience: human`** — Written for human readers. Agents may still read it but should be aware the formatting choices target humans.
+
+### Content
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `kind` | enum | no | `context`, `pointer`, or `index`. Defaults to `context`. |
+| `body.type` | enum | yes | Content format of the body. |
+| `body.code.lang` | string | no | Language identifier when `body.type` is `code`. |
+| `body.code.extension` | string | no | File extension when `body.type` is `code`. |
+
+#### Kind
+
+**`context`** — Content is in the body. Read it directly.
+
+**`pointer`** — Content is elsewhere. The body is empty or contains a brief note. See `payload` for where the content lives. Use for large files that shouldn't be loaded into an agent's context.
+
+**`index`** — A table of contents or navigation hub. The body lists and briefly describes other slices, with links. Agents should look for index slices first when entering an unfamiliar `.slices/` directory.
+
+#### Body Types
+
+| Type | Description |
+|------|-------------|
+| `markdown` | Rich text with markdown formatting. The default. |
+| `jsonl` | Newline-delimited JSON. One object per line. |
+| `text` | Plain text without formatting. |
+| `code` | Source code. Specify `body.code.lang`. |
+| `yaml` | Structured YAML data. |
+| `none` | No body content. Used with `kind: pointer`. |
+
+### Mutation
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `write` | enum | no | How this slice should be modified. Defaults to `append`. |
+| `overflow` | enum | no | What to do when the slice gets too large. |
+
+#### Write Modes
+
+**`append`** — Add new content at the end. Never edit existing content. Good for logs, decision records, chronological entries.
+
+**`replace`** — Overwrite the body entirely. Good for living documents where the whole thing should be current.
+
+**`immutable`** — Do not modify. Implied by `lifecycle: snapshot`. The slice is frozen.
+
+#### Overflow Strategies
+
+**`split`** — Break into multiple slices (e.g., by date range or topic).
+
+**`summarize`** — Compress older content into summaries, keep recent content intact.
+
+**`archive`** — Move old content to a separate archival slice.
+
+**`error`** — Refuse to write. Signal the problem to the user.
+
+### Contract
+
+The contract tells agents how to use this slice. All fields are natural language instructions.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `contract.purpose` | string | no | What content belongs in this slice. |
+| `contract.exclude` | string[] | no | What does NOT belong. |
+| `contract.format` | string | no | How to structure content (e.g., "One decision per section with rationale and date"). |
+| `contract.cleanup` | string | no | Maintenance rules (e.g., "Archive entries older than 1 year"). |
+
+### Provenance
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `origin.source` | enum | no | How the content was acquired. |
+| `origin.agent` | string | no | Which agent or user created this. |
+| `origin.confidence` | number | no | 0–1 reliability score. |
+| `origin.context` | string | no | Why this slice was created. |
+
+#### Source Types
+
+| Source | Description |
+|--------|-------------|
+| `user-stated` | User explicitly said this. Highest reliability. |
+| `inferred` | Agent inferred this from context. |
+| `observed` | Agent observed this from code, logs, or behavior. |
+| `generated` | Agent generated this (summary, compilation, etc.). |
+| `imported` | Imported from an external system. |
+
+### Derivation
+
+For slices that are generated or computed from other slices.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `derived_from.id` | string | no | Source slice ID. |
+| `derived_from.hash` | string | no | Source content hash at derivation time. Format: `sha256:...` |
+| `derived_from.transform` | string | no | What was done: `summarize`, `extract`, `compile`, `aggregate`. |
+
+When the source slice changes (hash no longer matches), the derived slice is stale and should be regenerated.
+
+### Pointer Payload
+
+For `kind: pointer` slices where content lives elsewhere.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `payload.uri` | string | no | Where the content lives. Path or URL. |
+| `payload.hash` | string | no | Content integrity hash. |
+| `payload.size` | number | no | Size in bytes. |
+
+### Links
+
+Typed relationships to other slices. The `rel` field is a freeform string — use whatever relationship makes sense. The recommended types below cover common patterns.
+
+```yaml
+links:
+  - rel: depends_on
+    to: 01JOTHER00000000000000002
+    label: Auth service design
+  - rel: supersedes
+    to: 01JOLD0000000000000000001
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `links[].rel` | string | yes | Relationship type. |
+| `links[].to` | string | yes | Target slice ID or relative path. |
+| `links[].label` | string | no | Human-readable description of the link. |
+
+#### Recommended Relationship Types
+
+| Relationship | Inverse | Description |
+|-------------|---------|-------------|
+| `depends_on` | `blocks` | A depends on B / B blocks A |
+| `supersedes` | `superseded_by` | A replaces B / B was replaced by A |
+| `parent` | `child` | A contains B / B is inside A |
+| `part_of` | `has_part` | A is a component of B / B has component A |
+| `derived_from` | `source_of` | A was derived from B / B is the source of A |
+| `evidence_for` | `evidence_against` | A supports B / A contradicts B |
+| `see_also` | `see_also` | Loose bidirectional association |
+| `routes_to` | `routed_from` | A routes content to B (used with contract.exclude) |
+
+These are recommendations, not constraints. Agents should use whatever `rel` string best describes the relationship.
+
+### Extension
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `meta` | object | no | Arbitrary user-defined key-value pairs. |
+
+Use `meta` for anything not covered by the schema: `priority`, `sprint`, `reviewer`, custom labels, tool-specific data.
+
+---
+
+## Discovery
+
+Slices must be discoverable without reading every body. The frontmatter is the discovery index.
+
+### Discovery Protocol
+
+1. **Look for index slices** — slices with `kind: index` serve as tables of contents. Start here.
+2. **Scan frontmatter** — read the YAML between `---` markers of each `.slice` file. Skip the body.
+3. **Match** — compare your query against `summary` (natural language), `topics` (keywords), and `tags` (categories).
+4. **Filter** — skip slices that are `expired`, wrong `scope`, wrong `audience`, or wrong `lifecycle` for your need.
+5. **Follow links** — once you find a relevant slice, follow its `links` to discover related slices.
+
+### Index Slices
+
+Every project should have at least one index slice. It serves as the entry point:
+
+```yaml
+---
+v: "0.2"
+id: 01JINDEX0000000000000001
+title: Project Knowledge Index
+summary: Table of contents for all project slices. Start here.
+tags: [index]
+topics: [navigation, discovery, table-of-contents]
+lifecycle: perpetual
+created_at: "2026-01-01T00:00:00Z"
+updated_at: "2026-03-17T00:00:00Z"
+validity:
+  status: fresh
+  stale_after: 30d
+scope: project
+audience: agent
+kind: index
+body:
+  type: markdown
+write: replace
+---
+
+# Project Knowledge Index
+
+## Architecture
+- **01JARCH001** — Authentication Architecture (JWT, OAuth2, refresh tokens)
+- **01JARCH002** — Database Schema (PostgreSQL, migrations, JSONB patterns)
+- **01JARCH003** — API Design (REST, versioning, error handling)
+
+## Decisions
+- **01JDEC001** — Architecture Decision Log (append-only, 23 entries)
+
+## Operations
+- **01JOPS001** — Deployment Runbook (CI/CD, staging, production)
+- **01JOPS002** — Incident Response Playbook
+
+## Current
+- **01JSPRINT01** — Sprint 14 Context (ephemeral, expires 2026-03-28)
+```
+
+---
+
+## Storage
+
+Slices are stored flat in a `.slices/` directory at the project root, named by ID:
+
+```
+.slices/
+  01JARCH00000000000000001.slice
+  01JDEC000000000000000001.slice
+  01JINDEX0000000000000001.slice
+  01JRETRO0000000000000001.slice
+```
+
+No nested directories. No semantic folder structure. The frontmatter (title, summary, tags, topics, links) provides all navigation. The flat structure keeps things simple for both agents and tools.
+
+### Personal Slices
+
+Personal slices (`scope: personal`) live outside the project, in a user-specific location. The convention is `~/.slices/` but agents should adapt to the environment.
+
+---
+
+## Identifiers
+
+Use [ULIDs](https://github.com/ulid/spec) for IDs:
+
+- 26 characters, Crockford's Base32: `01ARZ3NDEKTSV4RRFFQ69G5FAV`
+- Lexicographically sortable (timestamp prefix)
+- URL-safe (no special characters)
+- Globally unique (no coordination needed)
+- Monotonically increasing within the same millisecond
+
+Agents generating ULIDs can use any method: a ULID library, a timestamp-based approach, or even a reasonable approximation. The important properties are uniqueness and rough time-ordering.
+
+---
+
+## JSONL Bodies
+
+For slices with `body.type: jsonl`, each line is a self-contained JSON object.
+
+### Row Envelope
+
+Every row should have a `_meta` field with at least an `id` and `created_at`:
+
+```json
+{"_meta": {"id": "01JROW001", "created_at": "2026-02-02T12:00:00Z"}, "text": "Use PostgreSQL for primary storage."}
+```
+
+### Supersession
+
+To update a row without editing in place, append a new row with `_meta.supersedes`:
+
+```json
+{"_meta": {"id": "01JROW001", "created_at": "2026-02-02T12:00:00Z"}, "text": "Use PostgreSQL for primary storage."}
+{"_meta": {"id": "01JROW002", "created_at": "2026-02-10T09:00:00Z", "supersedes": ["01JROW001"]}, "text": "Use PostgreSQL with read replicas for primary storage."}
+```
+
+The active version is the newest in the supersession chain. This preserves history and makes concurrent writes safe.
+
+---
+
+## Complete Examples
+
+### Perpetual: Architecture Document
+
+```yaml
+---
+v: "0.2"
+id: 01JARCH00000000000000001
+title: Authentication Architecture
+summary: JWT-based stateless auth with refresh token rotation, RS256 signing, rate-limited login, session management via Redis
+tags: [architecture, backend, security]
+topics: [JWT, OAuth2, refresh-tokens, RS256, rate-limiting, Redis, session-management]
+lifecycle: perpetual
+created_at: "2026-01-15T10:00:00Z"
+updated_at: "2026-03-10T14:30:00Z"
+validity:
+  status: fresh
+  stale_after: 90d
+scope: project
+audience: both
+kind: context
+body:
+  type: markdown
+write: replace
+contract:
+  purpose: Authentication architecture and design decisions
+  exclude: [API endpoint details, security audit findings, credential values]
+  format: Document design decisions with rationale. Update when architecture changes.
+origin:
+  source: user-stated
+  agent: cursor
+  confidence: 0.95
+links:
+  - rel: depends_on
+    to: 01JAPI000000000000000002
+    label: API gateway configuration
+  - rel: see_also
+    to: 01JSEC000000000000000001
+    label: Security audit findings
 ---
 
 # Authentication Architecture
@@ -86,630 +464,218 @@ The system uses JWT tokens for stateless authentication.
 3. Access token expires in 15 minutes
 4. Refresh token rotates on each use
 
-## Security Considerations
+## Security
 
-- Tokens are signed with RS256
-- Refresh tokens are stored hashed in the database
-- Failed login attempts trigger rate limiting after 5 attempts
+- Tokens signed with RS256
+- Refresh tokens stored hashed in Redis
+- Rate limiting after 5 failed attempts
 ```
 
-### Pointer
-
-Content is elsewhere. This is just the handle.
-
-```yaml
-slice:
-  kind: pointer
-  body:
-    type: none
-  payload:
-    uri: ./large-file.json.gz
-    hash: sha256:a1b2c3...
-    size: 10485760
-```
-
-Pointer files never contain the payload. They have a title, summary, and metadata that make the payload discoverable and navigable without loading it. This solves the "10GB problem"—agents see the summary, not the raw data.
-
-**Example: Large Payload**
+### Snapshot: Sprint Retrospective
 
 ```yaml
 ---
-slice:
-  v: "1"
-  kind: pointer
-  id: 01JDUMP00000000000000001
-  title: Conversation history dump
-  summary: Raw conversation logs from 2025. 2.3GB compressed. Use representations for analysis.
-  body:
-    type: none
-  payload:
-    uri: ./payloads/conversations-2025.json.gz
-    hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-    size: 2469606195
-  contract:
-    purpose: "Immutable raw data. Do not edit. Create new pointer for new dumps."
-    write: error
-  links:
-    - rel: parent
-      to: 01JDATA00000000000000001
+v: "0.2"
+id: 01JRETRO0000000000000001
+title: Sprint 12 Retrospective
+summary: Sprint 12 retro — auth system shipped on time, flaky CI was the biggest blocker, need to invest in test infrastructure
+tags: [retro, sprint-12, process]
+topics: [sprint-retrospective, CI-pipeline, test-infrastructure, auth-system-launch]
+lifecycle: snapshot
+created_at: "2026-03-14T16:00:00Z"
+updated_at: "2026-03-14T16:00:00Z"
+validity:
+  expires_at: "2026-09-14T00:00:00Z"
+scope: team
+audience: both
+kind: context
+body:
+  type: markdown
+write: immutable
+origin:
+  source: observed
+  agent: cursor
+  context: Captured during team retrospective meeting
 ---
+
+# Sprint 12 Retrospective
+
+## What went well
+- Auth system shipped on schedule
+- Good cross-team collaboration on token rotation design
+
+## What didn't
+- CI pipeline flaky — 3 days lost to intermittent failures
+- No staging environment for auth testing
+
+## Action Items
+- [ ] Invest in test infrastructure (owner: platform team)
+- [ ] Set up auth staging environment (owner: backend team)
 ```
 
-Agents see the summary ("2.3GB compressed, use representations") and never accidentally try to load the payload.
-
-## Required Fields
-
-Every `.slice` file must have:
-
-| Field          | Type   | Description                                                            |
-| -------------- | ------ | ---------------------------------------------------------------------- |
-| `slice.v`         | string | Format version (`"1"`)                                                 |
-| `slice.id`        | string | Stable identifier (ULID recommended)                                   |
-| `slice.title`     | string | Display label for browsing                                             |
-| `slice.summary`   | string | 1-2 sentences for discovery                                            |
-| `slice.body.type` | enum   | `markdown`, `jsonl`, `none`, `code`, `conversation`, `text`, `yaml`, or `routine` |
-
-The ID is independent of the file path. Files can be renamed or moved without breaking links.
-
-## Contract
-
-The contract tells agents how to use this file. Contracts are purely instructional—they define what belongs, how to format content, and how to maintain the file. For routing content elsewhere, use links with the `routes_to` relationship.
-
-```yaml
-slice:
-  contract:
-    purpose: "Architecture decisions with rationale. One decision per entry."
-    exclude:
-      - "implementation details"
-      - "meeting notes"
-    format: "One decision per section. Include rationale and date."
-    cleanup: "Archive entries older than 1 year. Summarize quarterly."
-    write: append
-    overflow: split
-  links:
-    - rel: routes_to
-      to: ./implementation.slice
-      label: "Implementation details"
-    - rel: routes_to
-      to: ./meetings/
-      label: "Meeting notes"
-```
-
-### Purpose
-
-A sentence describing what belongs in this file. Agents use this to decide whether new information should go here or somewhere else.
-
-### Exclude
-
-A list of topics that don't belong in this file. Agents should route these topics elsewhere. Use links with `rel: routes_to` to specify where excluded topics should go.
-
-### Format
-
-Guidelines for content structure. Examples:
-
-- `"One decision per section. Include rationale and date."`
-- `"JSONL rows must have timestamp and author fields."`
-- `"Keep entries under 500 words."`
-
-### Cleanup
-
-Rules for maintenance and archival. Examples:
-
-- `"Archive entries older than 1 year."`
-- `"Summarize when over 100 entries."`
-- `"Delete superseded entries after 30 days."`
-
-**Example: Contract with Routing**
+### Ephemeral: Debugging Session
 
 ```yaml
 ---
-slice:
-  v: "1"
-  kind: context
-  id: 01JPROJ0000000000000001
-  title: Project overview
-  summary: High-level project context. What we're building and why.
-  body:
-    type: markdown
-  contract:
-    purpose: "Project goals, scope, and non-technical context."
-    exclude:
-      - "technical architecture"
-      - "implementation decisions"
-      - "API documentation"
-      - "meeting notes"
-      - "task tracking"
-    format: "High-level narrative. Update when scope changes."
-    cleanup: "Review quarterly. Archive outdated sections."
-    write: replace
-    overflow: summarize
-  links:
-    - rel: routes_to
-      to: 01JARCH00000000000000001
-      label: "Technical architecture"
-    - rel: routes_to
-      to: 01JDEC000000000000000001
-      label: "Implementation decisions"
-    - rel: routes_to
-      to: ./api/
-      label: "API documentation"
-    - rel: routes_to
-      to: ./meetings/
-      label: "Meeting notes"
+v: "0.2"
+id: 01JDEBUG0000000000000001
+title: Auth Token Refresh Bug
+summary: Investigating token refresh failure on mobile — refresh tokens expiring prematurely, suspect Redis TTL misconfiguration
+tags: [debugging, active]
+topics: [token-refresh, Redis-TTL, mobile-auth, bug-investigation]
+lifecycle: ephemeral
+created_at: "2026-03-17T09:00:00Z"
+updated_at: "2026-03-17T11:30:00Z"
+validity:
+  expires_at: "2026-03-18T09:00:00Z"
+scope: personal
+audience: agent
+kind: context
+body:
+  type: markdown
+write: append
+origin:
+  source: observed
+  agent: cursor
+  context: User reported mobile auth failures, investigating
 ---
-# Project Overview
 
-Building a customer support platform that scales.
+# Auth Token Refresh Bug
+
+## Symptoms
+- Mobile users getting logged out after ~5 minutes
+- Desktop users unaffected
+- Started after deploy on 2026-03-16
+
+## Investigation
+- Redis TTL for refresh tokens set to 300s (should be 86400s)
+- Looks like deploy config override is wrong
+- Check `config/redis.yml` production values
 ```
 
-The contract's `exclude` list tells agents what topics don't belong here. The `routes_to` links tell them where to put that content instead.
-
-### Write
-
-How to modify this file:
-
-- `append` — add new entries, never edit existing
-- `replace` — overwrite content entirely
-- `supersede` — append new entries that mark old ones as superseded
-
-### Overflow
-
-What to do when the file gets too large:
-
-- `split` — break into multiple files (e.g., by date)
-- `summarize` — compress old content into summaries
-- `archive` — move old content to archival storage
-- `error` — refuse to write, signal the problem
-
-## Links
-
-Files can link to other files with typed relationships:
-
-```yaml
-slice:
-  links:
-    - rel: depends_on
-      to: 01JOTHER00000000000000002
-    - rel: evidence_for
-      to: ./claims.slice
-```
-
-### Relationship Types
-
-Slices provides typed relationships with defined semantic properties:
-
-| Relationship   | Inverse            | Transitive | Symmetric | Use Case              |
-| -------------- | ------------------ | ---------- | --------- | --------------------- |
-| `depends_on`   | `blocks`           | Yes        | No        | Dependency graphs     |
-| `evidence_for` | `evidence_against` | No         | No        | Argumentation         |
-| `supersedes`   | `superseded_by`    | Yes        | No        | Knowledge evolution   |
-| `parent`       | `child`            | Yes        | No        | Containment hierarchy |
-| `part_of`      | `has_part`         | Yes        | No        | Composition           |
-| `is_a`         | `type_of`          | Yes        | No        | Taxonomy              |
-| `derived_from` | `source_of`        | Yes        | No        | Provenance            |
-| `see_also`     | `see_also`         | No         | Yes       | Loose association     |
-| `routes_to`    | `routed_from`      | No         | No        | Content routing       |
-
-#### Relationship Categories
-
-**Dependency Graph**
-
-- `depends_on` — A depends on B (A needs B to function)
-- `blocks` — A blocks B (B cannot proceed until A is resolved)
-
-**Argumentation**
-
-- `evidence_for` — A supports the claim in B
-- `evidence_against` — A contradicts or weakens B
-
-**Evolution**
-
-- `supersedes` — A replaces B (newer version)
-- `superseded_by` — A was replaced by B (older version)
-
-**Hierarchy (Containment)**
-
-- `parent` — A contains B (B is inside A)
-- `child` — A is contained by B (A is inside B)
-
-**Composition**
-
-- `part_of` — A is a component of B
-- `has_part` — A contains component B
-
-**Taxonomy**
-
-- `is_a` — A is a type/instance of B
-- `type_of` — A is a category that includes B
-
-**Derivation**
-
-- `derived_from` — A was generated/computed from B
-- `source_of` — A is the source material for B
-
-**Loose Association**
-
-- `see_also` — A is related to B (bidirectional)
-
-**Routing**
-
-- `routes_to` — A routes content to B (used with contract.exclude to tell agents where to put excluded content)
-- `routed_from` — A receives routed content from B (inverse of routes_to)
-
-#### Relationship Properties
-
-**Transitive** relationships allow inference through chains:
-
-```
-A depends_on B, B depends_on C → A depends_on C (inferred)
-A is_a B, B is_a C → A is_a C (inferred)
-```
-
-**Symmetric** relationships work both ways:
-
-```
-A see_also B → B see_also A (inferred)
-```
-
-Use the `--infer` flag with `tt explore` to include inferred relationships:
-
-```bash
-tt explore 01JCOMPONENT001 --rel type_of --infer
-# Returns direct AND inferred type_of relationships
-```
-
-### Addressing
-
-Links can target by:
-
-- **ID** — `01JEXAMPLE000000000000001`
-- **Path** — `./other-file.slice` or `../sibling/file.slice`
-
-IDs are preferred for stability. Paths are convenient for humans reading the raw file.
-
-## Derived Files
-
-A file derived from another (like a summary) declares its source:
-
-```yaml
-slice:
-  kind: context
-  derived_from:
-    id: 01JORIGINAL0000000000001
-    hash: sha256:a1b2c3...
-```
-
-The `hash` field enables mechanical freshness checking. If the source's hash changes, the derived file is stale and should be regenerated.
-
-**Example: Derived Summary**
+### Derived: Generated Summary
 
 ```yaml
 ---
-slice:
-  v: "1"
-  kind: context
-  id: 01JSUM000000000000000001
-  title: Conversation dump - summary
-  summary: Key themes and statistics from the 2025 conversation logs.
-  body:
-    type: markdown
-  derived_from:
-    id: 01JDUMP00000000000000001
-    hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-  contract:
-    purpose: "Auto-generated summary. Regenerate if source changes."
-    write: replace
----
-
-# Conversation Summary (2025)
-
-**Total conversations:** 147,832
-**Date range:** 2025-01-01 to 2025-12-31
-**Average length:** 12 turns
-
-## Top Themes
-
-1. Technical support (34%)
-2. Account management (28%)
-3. Feature requests (19%)
-4. Billing questions (12%)
-5. Other (7%)
-```
-
-## Staleness
-
-Slices supports two types of staleness detection:
-
-### Hash-Based Staleness
-
-For derived files, staleness is detected by comparing the stored hash against the current source hash. This is mechanical and precise—if the hash doesn't match, the derived file needs regeneration.
-
-### Time-Based Staleness
-
-Knowledge can also become stale over time, even if no source file changed. A 6-month-old architecture decision might be obsolete.
-
-Time-based staleness uses a decay model:
-
-```typescript
-staleness = 1 - Math.pow(0.5, daysSinceUpdate / halfLife);
-```
-
-With a 90-day half-life:
-
-- 0 days: 0% stale (fully fresh)
-- 45 days: 29% stale
-- 90 days: 50% stale
-- 180 days: 75% stale
-
-Tools can filter or annotate results by staleness:
-
-```
-tt search "authentication"
-  01JABC (auth-design)     [FRESH - 2 days ago]
-  01JDEF (auth-decisions)  [STALE - 3 months ago] ⚠️
-```
-
-## Provenance (Optional)
-
-Rows can track where knowledge came from:
-
-```json
-{
-  "_meta": {
-    "id": "01JROW001",
-    "created_at": "2026-02-02T12:00:00Z",
-    "provenance": {
-      "agent": "cursor-session-abc123",
-      "session": "ec95c277-7cbf-...",
-      "source": "user-statement",
-      "confidence": 0.9,
-      "context": "User explicitly stated during architecture review"
-    }
-  },
-  "text": "The API uses GraphQL"
-}
-```
-
-Provenance fields:
-
-| Field        | Description                                                         |
-| ------------ | ------------------------------------------------------------------- |
-| `agent`      | Agent or user that created this                                     |
-| `session`    | Session ID for tracing                                              |
-| `source`     | How knowledge was acquired (user-statement, inference, observation) |
-| `confidence` | 0-1 reliability score                                               |
-| `context`    | Human-readable explanation                                          |
-
-Provenance is opt-in. When enabled, all write operations automatically capture session context.
-
-## Body Types
-
-### Markdown
-
-Rich text content with standard markdown formatting.
-
-```yaml
-slice:
-  body:
-    type: markdown
-```
-
-### JSONL
-
-Structured data with one JSON object per line.
-
-```yaml
-slice:
-  body:
-    type: jsonl
-```
-
-**Example: Decisions Log**
-
-```yaml
----
-slice:
-  v: "1"
-  kind: context
+v: "0.2"
+id: 01JSUM000000000000000001
+title: Q1 2026 Architecture Decision Summary
+summary: Auto-generated summary of 23 architecture decisions from Q1 2026 — covers database, auth, API design, caching, and deployment choices
+tags: [summary, decisions, q1-2026]
+topics: [architecture-decisions, PostgreSQL, JWT, REST-API, Redis, Docker, CI-CD]
+lifecycle: perpetual
+created_at: "2026-04-01T00:00:00Z"
+updated_at: "2026-04-01T00:00:00Z"
+validity:
+  status: fresh
+  depends_on:
+    - id: 01JDEC000000000000000001
+      hash: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  stale_after: 7d
+scope: project
+audience: both
+kind: context
+body:
+  type: markdown
+write: replace
+derived_from:
   id: 01JDEC000000000000000001
-  title: Architecture decisions
-  summary: Log of architecture decisions with rationale and evidence.
-  body:
-    type: jsonl
-  contract:
-    purpose: "Architecture decisions with rationale and evidence."
-    exclude:
-      - "implementation details"
-      - "meeting notes"
-    format: "One decision per entry. Include rationale and evidence links."
-    cleanup: "Review stale decisions quarterly."
-    write: append
-    overflow: split
-  links:
-    - rel: routes_to
-      to: ./implementation/
-      label: "Implementation details"
-    - rel: routes_to
-      to: ./meetings/
-      label: "Meeting notes"
+  hash: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  transform: summarize
+origin:
+  source: generated
+  agent: cursor
+  confidence: 0.85
+  context: Quarterly summary generation
 ---
-{"_meta":{"id":"01JROW00000000000000001","created_at":"2026-01-15T10:00:00Z","confidence":0.9,"provenance":{"author":"dom","method":"design_review"}},"text":"Use PostgreSQL for primary data storage.","rationale":"Team expertise, JSONB support, proven scale.","links":[{"rel":"evidence_for","to":"01JREQ00000000000000001"}]}
-{"_meta":{"id":"01JROW00000000000000002","created_at":"2026-01-20T14:30:00Z","confidence":0.85,"provenance":{"author":"alex","method":"spike"}},"text":"Cache with Redis for session data.","rationale":"Sub-millisecond reads, built-in expiration, simple ops."}
-{"_meta":{"id":"01JROW00000000000000003","created_at":"2026-02-01T09:00:00Z","supersedes":["01JROW00000000000000001"],"confidence":0.95,"provenance":{"author":"dom","method":"production_learning"}},"text":"Use PostgreSQL with read replicas for primary data storage.","rationale":"Original decision validated. Adding read replicas for query load."}
+
+# Q1 2026 Architecture Decisions
+
+**23 decisions** recorded from January to March 2026.
+
+## Key Themes
+1. **Database**: PostgreSQL with read replicas, JSONB for flexible schemas
+2. **Auth**: JWT with RS256, refresh token rotation, Redis session store
+3. **API**: REST with versioned endpoints, consistent error format
+4. **Infrastructure**: Docker compose for local, Kubernetes for production
 ```
 
-Row 3 supersedes row 1—the decision evolved based on production experience.
-
-### None
-
-For pointer files where content is elsewhere.
+### Pointer: Large Dataset
 
 ```yaml
-slice:
-  body:
-    type: none
+---
+v: "0.2"
+id: 01JDUMP0000000000000001
+title: 2025 Conversation Logs
+summary: Raw conversation logs from 2025. 2.3GB compressed. 147K conversations. Use the derived summary (01JSUM002) for analysis.
+tags: [data, conversations, 2025]
+topics: [conversation-logs, raw-data, customer-support, 2025-archive]
+lifecycle: snapshot
+created_at: "2026-01-02T00:00:00Z"
+updated_at: "2026-01-02T00:00:00Z"
+scope: project
+audience: agent
+kind: pointer
+body:
+  type: none
+write: immutable
+payload:
+  uri: ./data/conversations-2025.json.gz
+  hash: "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  size: 2469606195
+links:
+  - rel: source_of
+    to: 01JSUM000000000000000002
+    label: Derived conversation summary
+---
 ```
 
-### Code
-
-Source code with language metadata.
+### Index: Project Knowledge Hub
 
 ```yaml
-slice:
-  body:
-    type: code
-    code:
-      lang: typescript
-      extension: ts
-      args: ["--strict"]
+---
+v: "0.2"
+id: 01JINDEX0000000000000001
+title: Acme Project Knowledge Index
+summary: Master index of all project knowledge slices. Architecture, decisions, operations, and current sprint context.
+tags: [index]
+topics: [navigation, project-overview, table-of-contents]
+lifecycle: perpetual
+created_at: "2026-01-01T00:00:00Z"
+updated_at: "2026-03-17T00:00:00Z"
+validity:
+  status: fresh
+  stale_after: 14d
+scope: project
+audience: agent
+kind: index
+body:
+  type: markdown
+write: replace
+contract:
+  purpose: Master index of all project slices. Update when slices are added or removed.
+  format: Group by category. One line per slice with ID, title, and brief note.
+---
+
+# Acme Project — Knowledge Index
+
+## Architecture
+- **01JARCH001** — Authentication Architecture (JWT, OAuth2, refresh tokens)
+- **01JARCH002** — Database Schema (PostgreSQL, migrations, JSONB)
+- **01JARCH003** — API Design (REST, versioning, error handling)
+
+## Decisions
+- **01JDEC001** — Architecture Decision Log (23 entries, append-only)
+- **01JSUM001** — Q1 Decision Summary (derived, auto-generated)
+
+## Operations
+- **01JOPS001** — Deployment Runbook (CI/CD, staging, production)
+- **01JOPS002** — Incident Response (playbook, escalation paths)
+
+## Data
+- **01JDUMP001** — 2025 Conversation Logs (pointer, 2.3GB)
+
+## Current Sprint
+- **01JSPRINT01** — Sprint 14 Context (ephemeral, expires 2026-03-28)
+- **01JDEBUG001** — Auth Token Refresh Bug (ephemeral, active investigation)
 ```
-
-### Conversation
-
-Agent conversations with tool calls, compaction, and OTEL tracing support.
-
-```yaml
-slice:
-  body:
-    type: conversation
-    conversation:
-      participants: [user, assistant, tool_call, tool_result]
-      agent_id: claude-3-opus
-      session_id: sess_abc123
-      trace_id: "4bf92f3577b34da6a3ce929d0e0e4736" # 32 hex chars
-      span_id: "00f067aa0ba902b7" # 16 hex chars
-      format: messages # messages | transcript | compacted
-      includes_tool_calls: true
-      includes_compaction: false
-```
-
-Conversation body uses JSONL format:
-
-```jsonl
-{"role": "user", "content": "...", "ts": "2026-02-03T10:00:00Z"}
-{"role": "assistant", "content": "...", "ts": "2026-02-03T10:00:05Z"}
-{"role": "tool_call", "name": "read_file", "args": {"path": "..."}, "call_id": "call_001"}
-{"role": "tool_result", "call_id": "call_001", "content": "..."}
-{"type": "compaction_note", "summary": "...", "turns_summarized": 15}
-```
-
-### Text
-
-Plain text without markdown formatting.
-
-```yaml
-slice:
-  body:
-    type: text
-```
-
-### YAML
-
-Structured YAML data.
-
-```yaml
-slice:
-  body:
-    type: yaml
-```
-
-### Routine
-
-Repeatable workflows with step-by-step instructions for agent automation.
-
-```yaml
-slice:
-  body:
-    type: routine
-```
-
-Routine bodies use JSONL format with step types:
-
-- `instruction` — direct instruction to follow
-- `read` — read another file's content for reference
-- `run` — execute code or spawn a sub-agent (with optional `args`)
-
-Each step can include a `note` annotation and `requirements` prerequisites. Use `tt routine <id>` to compile a routine into executable markdown.
-
-## Meta Block
-
-Arbitrary user-defined key-values:
-
-```yaml
-slice:
-  meta:
-    author: alice
-    priority: high
-    reviewed: true
-```
-
-## JSONL Body
-
-### Row Envelope
-
-Every row has metadata and content:
-
-```json
-{
-  "_meta": { "id": "01JROW001", "created_at": "2026-02-02T12:00:00Z" },
-  "text": "The API uses REST."
-}
-```
-
-Required `_meta` fields:
-
-- `id` — unique row identifier
-- `created_at` — ISO-8601 timestamp
-
-### Optional Metadata
-
-Rows can include additional metadata:
-
-```json
-{
-  "_meta": {
-    "id": "01JROW002",
-    "created_at": "2026-02-02T12:05:00Z",
-    "supersedes": ["01JROW001"],
-    "confidence": 0.9,
-    "provenance": { "author": "dom", "method": "observation" },
-    "status": "active",
-    "links": [{ "rel": "evidence_for", "to": "01JCLAIM001" }]
-  },
-  "text": "The API is migrating from REST to GraphQL."
-}
-```
-
-### Mutation Model
-
-The recommended mutation model is **append-only with supersession**:
-
-1. Never edit rows in place
-2. To update, append a new row with `supersedes: [old_id]`
-3. The active version is the newest in the supersession chain
-
-This preserves history, reduces merge conflicts, and makes concurrent writes safe.
-
-## Storage
-
-Slices are stored flat, named by ID:
-
-```
-.slices/
-  01JEXAMPLE000000000000001.slice
-  01JEXAMPLE000000000000002.slice
-  01JEXAMPLE000000000000003.slice
-```
-
-No semantic directory structure. No nested folders. The metadata (title, summary, links) provides navigation. Tools abstract the filesystem entirely—agents never need to know about paths.
-
-## Identifiers
-
-Use [ULIDs](https://github.com/ulid/spec) for IDs:
-
-- Lexicographically sortable (timestamp prefix)
-- URL-safe (no special characters)
-- Globally unique (no coordination needed)
-- 26 characters: `01ARZ3NDEKTSV4RRFFQ69G5FAV`
-
-UUIDs are also acceptable but less convenient for sorting.

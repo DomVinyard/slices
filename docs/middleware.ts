@@ -1,54 +1,58 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-const AGENT_PATTERNS = [
-  'curl/',
-  'wget/',
-  'httpie/',
-  'python-requests/',
-  'python-httpx/',
-  'node-fetch/',
-  'go-http-client/',
-  'ruby/',
-  'anthropic/',
-  'openai/',
-  'claudebot',
-  'gptbot',
-  'chatgpt',
-  'perplexitybot',
-  'cohere-ai',
+const CLI_AGENTS = [
+  "curl",
+  "wget",
+  "httpie",
+  "python-requests",
+  "python-urllib",
+  "node-fetch",
+  "undici",
+];
+
+const BOT_AGENTS = [
+  "openai",
+  "chatgpt",
+  "gptbot",
+  "claudebot",
+  "anthropic",
+  "perplexity",
+  "cohere",
+  "google-extended",
+  "bingbot",
 ];
 
 export function middleware(request: NextRequest) {
-  // Only intercept docs pages, not /agents, /llms.txt, /demo, or static assets
   const path = request.nextUrl.pathname;
+
   if (
-    path.startsWith('/agents') ||
-    path.startsWith('/llms.txt') ||
-    path.startsWith('/demo') ||
-    path.startsWith('/_next') ||
-    path.startsWith('/api')
+    path.startsWith("/install") ||
+    path.startsWith("/skill") ||
+    path.startsWith("/spec.md") ||
+    path.startsWith("/llms.txt") ||
+    path.startsWith("/spec") ||
+    path.startsWith("/_next") ||
+    path.startsWith("/api") ||
+    path.includes(".")
   ) {
     return NextResponse.next();
   }
 
-  const ua = (request.headers.get('user-agent') || '').toLowerCase();
-  const accept = request.headers.get('accept') || '';
+  const ua = (request.headers.get("user-agent") || "").toLowerCase();
+  const accept = request.headers.get("accept") || "";
 
-  // Redirect if the client is a known agent/bot
-  const isAgent = AGENT_PATTERNS.some((p) => ua.includes(p));
+  const isCli = CLI_AGENTS.some((agent) => ua.includes(agent));
+  const isBot = BOT_AGENTS.some((bot) => ua.includes(bot));
+  const wantsPlainText =
+    accept.includes("text/plain") || accept.includes("text/markdown");
 
-  // Redirect if the client explicitly wants plain text or markdown (not a browser)
-  const wantsMachineReadable =
-    (accept.includes('text/plain') || accept.includes('text/markdown')) &&
-    !accept.includes('text/html');
-
-  if (isAgent || wantsMachineReadable) {
-    return NextResponse.redirect(new URL('/llms.txt', request.url));
+  if (isCli || isBot || wantsPlainText) {
+    return NextResponse.redirect(new URL("/install", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

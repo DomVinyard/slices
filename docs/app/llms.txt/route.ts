@@ -1,45 +1,42 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-const INSTALL_SCRIPT = `#!/bin/bash
-# Slices installer - https://slices.info
+const LLMS_TXT = `# slices.info
 
-INSTALL_DIR="\${HOME}/slices"
+Slices is a file-based context format for AI agents.
 
-if [ -d "$INSTALL_DIR" ]; then
-    echo "Slices already installed at $INSTALL_DIR"
-    echo "To reinstall: rm -rf ~/slices && curl -fsSL slices.info | sh"
-    exit 0
-fi
+## Install
 
-echo "Installing Slices to ~/slices..."
+curl -fsSL slices.info/install | sh
 
-if command -v git &> /dev/null; then
-    git clone --depth 1 https://github.com/DomVinyard/slices.git "$INSTALL_DIR" 2>/dev/null
-else
-    mkdir -p "$INSTALL_DIR"
-    curl -fsSL https://github.com/DomVinyard/slices/archive/main.tar.gz | tar -xz -C "\${HOME}"
-    mv "\${HOME}/slices-main"/* "$INSTALL_DIR/"
-    rm -rf "\${HOME}/slices-main"
-fi
+This installs a skill (SKILL.md) and specification (SPEC.md) to ~/.cursor/skills/slices/.
 
-echo ""
-echo "=== SLICES INSTALLED ==="
-echo ""
-echo "AGENT: Run this command now to complete setup:"
-echo ""
-echo "  python ~/slices/cli.py bootstrap <path-to-your-skills-directory>"
-echo ""
-echo "Common skills directories:"
-echo "  Cursor:   ~/.cursor/skills"
-echo "  Windsurf: ~/.codeium/windsurf/skills"
-echo ""
-echo "This outputs documentation and instructions for setting up the reminder rule."
+## Resources
+
+- Skill (teaches agents how to use slices): https://slices.info/skill
+- Specification (the format definition): https://slices.info/spec.md
+- Web specification: https://slices.info/spec
+- GitHub: https://github.com/nicholasdomin/slices
+
+## What is a slice?
+
+A .slice file is YAML frontmatter + body content. Key frontmatter fields:
+- id, title, summary, tags, topics (discovery)
+- lifecycle: perpetual | snapshot | ephemeral (temporality)
+- validity: status, expires_at, stale_after, depends_on (freshness)
+- scope: personal | project | team (ownership)
+- kind: context | pointer | index (content type)
+- write: append | replace | immutable (mutation rules)
+- links: typed relationships to other slices
+
+Slices are stored in .slices/ directories and require no special tooling.
+Agents read and write them as plain files.
 `;
 
 export async function GET() {
-  return new NextResponse(INSTALL_SCRIPT, {
+  return new NextResponse(LLMS_TXT, {
     headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=300",
     },
   });
 }

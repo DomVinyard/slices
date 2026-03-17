@@ -59,11 +59,8 @@ export function Nav() {
           slices
         </Link>
         <div className="flex items-center gap-6 text-sm">
-          <Link href="/spec" className={linkClass("/spec")}>
-            spec
-          </Link>
-          <Link href="/resources" className={linkClass("/resources")}>
-            skill
+          <Link href="/about" className={linkClass("/about")}>
+            about
           </Link>
         </div>
       </div>

@@ -195,17 +195,10 @@ export default function Home() {
         <section className="py-16 border-t border-zinc-800">
           <div className="flex items-center justify-center gap-6 text-sm">
             <Link
-              href="/spec"
+              href="/about"
               className="text-indigo-400 hover:text-indigo-300 transition-colors"
             >
-              Read the specification
-            </Link>
-            <span className="text-zinc-700">|</span>
-            <Link
-              href="/resources"
-              className="text-zinc-400 hover:text-zinc-300 transition-colors"
-            >
-              View the skill
+              Why slices?
             </Link>
           </div>
           <p className="text-center text-xs text-zinc-600 mt-8">v0.2</p>

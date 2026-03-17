@@ -27,8 +27,8 @@ export default function ResourcesPage() {
   return (
     <>
       <Nav />
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="mb-8 p-6 rounded-lg border border-zinc-800 bg-zinc-900/50">
+      <main className="max-w-4xl mx-auto px-6 py-10">
+        <div className="mb-8 p-6 rounded-lg border border-zinc-800 bg-zinc-900/50 text-center">
           <p className="text-sm text-zinc-400 mb-3">
             Copy and paste into your agent to install:
           </p>

@@ -21,7 +21,7 @@ export default async function SpecPage() {
     <>
       <Nav />
       <main className="max-w-4xl mx-auto px-6 py-16">
-        <div className="mb-12 p-6 rounded-lg border border-zinc-800 bg-zinc-900/50">
+        <div className="mb-12 p-6 rounded-lg border border-zinc-800 bg-zinc-900/50 text-center">
           <p className="text-sm text-zinc-400 mb-3">
             Copy and paste into your agent to install the skill:
           </p>
